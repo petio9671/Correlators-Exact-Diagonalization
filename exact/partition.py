@@ -7,7 +7,7 @@ from exact import format
 
 class PartitionFunction:
 
-    def __init__(self, H, beta, nt, _continuum = 500):
+    def __init__(self, H, beta, nt, _continuum = 100):
         self.H = H
         self.beta = beta
         self.nt = nt

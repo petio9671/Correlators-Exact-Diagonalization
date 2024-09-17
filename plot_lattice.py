@@ -9,9 +9,8 @@ if __name__ == '__main__':
 
     import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--L', type=int, nargs=2, default=(3,3))
-    parser.add_argument('--bz', default=False, action='store_true')
+    parser = exact.parse.ArgumentParser('L')
+    parser.add_argument('--bz', default=False, action='store_true', help='Show the Brillouin zone rather than the spatial lattice')
     parser.add_argument('--pdf', default='', type=str)
 
     args = parser.parse_args()
@@ -27,6 +26,8 @@ if __name__ == '__main__':
     else:
         lattice.plot_lattice(ax)
         ax.set_aspect('auto')
+
+    fig.suptitle(f'{lattice} {"Brillouin Zone" if args.bz else "Layout"}')
 
     if args.pdf:
         fig.savefig(args.pdf)

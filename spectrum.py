@@ -12,9 +12,7 @@ if __name__ == '__main__':
 
     import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--L', type=int, nargs=2, default=(1,1))
-    parser.add_argument('--U', type=float, default=1.0)
+    parser = exact.parse.ArgumentParser('L', 'U')
     parser.add_argument('--pdf', default='', type=str)
     args = parser.parse_args()
 
@@ -23,7 +21,7 @@ if __name__ == '__main__':
     energies, unitary = np.linalg.eigh(hubbard.Hamiltonian.toarray())
 
     fig, ax = plt.subplots(1,1)
-    ax.plot(energies)
+    ax.plot(energies, marker='o', linestyle='none')
 
     ax.set_xlabel('index')
     ax.set_ylabel('energy/κ')

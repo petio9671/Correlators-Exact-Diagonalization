@@ -198,12 +198,11 @@ class Honeycomb:
 
             ))#fillstyle='none', color='black')
         options = {
-                'color': 'black',
+                'color': 'red',
                 'marker': '.',
-                'linestyle': 'none',
                 }
         options.update(kwargs)
-        ax.plot(momenta[:,0], momenta[:,1], **options)
+        ax.scatter(momenta[:,0], momenta[:,1], **options)
         ax.set_xlim((-2.5,+2.5))
         ax.set_ylim((-2.5,+2.5))
         ax.axis('off')

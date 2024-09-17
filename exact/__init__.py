@@ -9,3 +9,4 @@ sparse_array = scipy.sparse.csr_array
 from exact.honeycomb import Honeycomb
 from exact.hubbard import Hubbard
 from exact.partition import PartitionFunction
+import exact.parse
