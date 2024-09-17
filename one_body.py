@@ -28,7 +28,6 @@ if __name__ == '__main__':
 
     lattice = exact.Honeycomb(*args.L)
     hubbard = exact.Hubbard(lattice, args.U)
-    energies, unitary = np.linalg.eigh(hubbard.Hamiltonian.toarray())
 
     Z_discretized = exact.PartitionFunction(hubbard, args.beta, args.nt)
 
