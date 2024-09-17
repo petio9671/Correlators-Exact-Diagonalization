@@ -1,9 +1,9 @@
 import scipy.sparse
 
-format = 'csc'
-sparse_array = scipy.sparse.csc_array
-#format = 'csr'
-#sparse_array = scipy.sparse.csr_array
+#format = 'csc'
+#sparse_array = scipy.sparse.csc_array
+format = 'csr'
+sparse_array = scipy.sparse.csr_array
 
 
 from exact.honeycomb import Honeycomb

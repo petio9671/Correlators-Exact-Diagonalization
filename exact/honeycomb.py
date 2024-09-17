@@ -5,6 +5,8 @@ from functools import cached_property
 
 from exact import format
 
+from matplotlib.patches import Polygon
+
 class Honeycomb:
 
     a = np.sqrt(3)/2 * np.array([
@@ -41,7 +43,8 @@ class Honeycomb:
             'gamma': np.array([0,0]),
         }
 
-
+    def __str__(self):
+        return f'Honeycomb({self.L[0]}, {self.L[1]})'
 
     @cached_property
     def adjacency_list(self):
@@ -90,6 +93,16 @@ class Honeycomb:
     def neighbors(self, site):
         ...
 
+    def eq_mod_lattice(self, x, y, eps=1e-12):
+        diff = x-y
+
+        # Now we try to write diff as integer multiples of b
+        denominator = self.unit_cells * (self.a[0,1] * self.a[1,0] - self.a[0,0] * self.a[1, 1])
+        m = self.L[1] * (diff[1] * self.a[1,0] - diff[0] * self.a[1,1]) / denominator
+        n = self.L[0] * (diff[0] * self.a[0,1] - diff[1] * self.a[0,0]) / denominator
+
+        return (abs(np.round(m)-m)<eps) and (abs(np.round(n)-n)<eps)
+
     def fourier(self, momentum, band):
         '''
         band in ±1
@@ -114,21 +127,52 @@ class Honeycomb:
 
         return amplitudes
 
+    @cached_property
     def momenta(self):
         num_momenta = self.unit_cells
 
-        lattice_vec = (2*np.pi/np.sqrt(3))*np.array([[1/np.sqrt(3), 1], [1/np.sqrt(3), -1]])
         momenta = np.zeros((num_momenta, 2))
         for n in range(self.L[0]):
             for m in range(self.L[1]):
-                momenta[n*self.L[1] + m] = n*self.b[0]/self.L[0] + m*self.b[1]/self.L[1]
+                momenta[n*self.L[1] + m] = self.mod_bz(n*self.b[0]/self.L[0] + m*self.b[1]/self.L[1])
         return momenta
 
-    def eq_mod_lattice(self, x, y):
-        ...
+    def mod_bz(self, p):
+        # This is a stupid brute-force method that could probably be much smarter.
+        in_bz = False
+        while not in_bz:
+            # Try to make the vector smaller any way you can.
+            if ((p - self.b[0])**2).sum() < (p**2).sum():
+                p -= self.b[0]
+            elif ((p + self.b[0])**2).sum() < (p**2).sum():
+                p += self.b[0]
+            elif ((p - self.b[1])**2).sum() < (p**2).sum():
+                p -= self.b[1]
+            elif ((p + self.b[1])**2).sum() < (p**2).sum():
+                p += self.b[1]
+            # Some points might need a combination of b[0] and b[1] to get smaller.
+            elif ((p + self.b[0] + self.b[1])**2).sum() < (p**2).sum():
+                p += self.b[0] + self.b[1]
+            elif ((p + self.b[0] - self.b[1])**2).sum() < (p**2).sum():
+                p += self.b[0] - self.b[1]
+            elif ((p - self.b[0] + self.b[1])**2).sum() < (p**2).sum():
+                p += - self.b[0] + self.b[1]
+            elif ((p - self.b[0] - self.b[1])**2).sum() < (p**2).sum():
+                p += - self.b[0] - self.b[1]
+            else:
+                in_bz = True
 
-    def eq_mod_BZ(self, k, q):
-        ...
+        return p
+
+    def eq_mod_BZ(self, k, q, eps=1e-12):
+        diff = k-q
+
+        # Now we try to write diff as integer multiples of b
+        denominator = self.b[0,1] * self.b[1,0] - self.b[0,0] * self.b[1, 1]
+        m = (diff[1] * self.b[1,0] - diff[0] * self.b[1,1]) / denominator
+        n = (diff[0] * self.b[0,1] - diff[1] * self.b[0,0]) / denominator
+
+        return (abs(np.round(m)-m)<eps) and (abs(np.round(n)-n)<eps)
 
 
     def plot_lattice(self, ax, colors=('red', 'blue')):
@@ -138,4 +182,29 @@ class Honeycomb:
         ax.set_aspect('auto')
 
     def plot_bz(self, ax, **kwargs):
-        pass
+        momenta = self.momenta
+        b = self.b
+        boundary = 1./3 * np.array([
+            -  b[0]+  b[1],
+            -2*b[0]-  b[1],
+            -  b[0]-2*b[1],
+            +  b[0]-  b[1],
+            +2*b[0]+  b[1],
+            +  b[0]+2*b[1],
+            ])
+        ax.add_patch(Polygon( boundary,
+            edgecolor='black',
+            fill=False,
+
+            ))#fillstyle='none', color='black')
+        options = {
+                'color': 'black',
+                'marker': '.',
+                'linestyle': 'none',
+                }
+        options.update(kwargs)
+        ax.plot(momenta[:,0], momenta[:,1], **options)
+        ax.set_xlim((-2.5,+2.5))
+        ax.set_ylim((-2.5,+2.5))
+        ax.axis('off')
+        ax.set_aspect(1)
