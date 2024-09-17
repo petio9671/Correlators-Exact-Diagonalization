@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 def one_body_correlator(Z, momentum, operator):
 
     # fourier amplitudes
-    c_plus  = lattice.fourier(momentum, +1)
-    c_minus = lattice.fourier(momentum, -1)
+    c_plus  = Z.H.Lattice.fourier(momentum, +1)
+    c_minus = Z.H.Lattice.fourier(momentum, -1)
 
     # band operators
     o_plus  = hubbard.operator(c_plus,  operator)
