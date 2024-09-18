@@ -32,6 +32,6 @@ def ArgumentParser(*flags):
     if 'momentum' in flags:
         parser.add_argument('--momentum', type=int, default=0, help='An integer into the lattice.momenta; see plot_lattice.py')
     if 'species' in flags:
-        parser.add_argument('--species', choices=('p', 'h', 'particle', 'hole'), type=species)
+        parser.add_argument('--species', choices=('p', 'h', 'particle', 'hole'), type=species, default='particle')
 
     return parser

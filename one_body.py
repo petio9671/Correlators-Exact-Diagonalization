@@ -1,3 +1,4 @@
+from itertools import product
 import numpy as np
 import exact
 import matplotlib.pyplot as plt
@@ -7,7 +8,16 @@ import scipy as sc
 import logging
 logger = logging.getLogger(__name__)
 
-def one_body_correlator(Z, momentum, operator):
+def correlator(Z, sink, source):
+
+    I, J = len(sink), len(source)
+    correlator = np.zeros((I, J, len(Z.taus)), dtype=complex)
+    for i, j in product(range(I), range(J)):
+        correlator[i,j] = Z.correlator(sink[i].T.conj(), source[j])
+
+    return correlator
+
+def one_body_operators(Z, momentum, operator):
 
     # fourier amplitudes
     c_plus  = Z.H.Lattice.fourier(momentum, +1)
@@ -17,6 +27,7 @@ def one_body_correlator(Z, momentum, operator):
     o_plus  = hubbard.operator(c_plus,  operator)
     o_minus = hubbard.operator(c_minus, operator)
 
+    return np.stack((o_plus, o_minus))
 
     correlator = np.zeros((2,2, len(Z.taus)), dtype=complex)
     correlator[0,0] = Z.correlator(o_plus.T.conj(), o_plus)
@@ -45,8 +56,9 @@ if __name__ == '__main__':
     Z = exact.PartitionFunction(hubbard, args.beta, args.nt)
 
     momentum = lattice.momenta[args.momentum]
-    operator = hubbard.destroy_particle if (args.species == 'particle') else hubbard.destroy_hole
-    correlator = one_body_correlator(Z, momentum, operator)
+    flavor = hubbard.destroy_particle if (args.species == 'particle') else hubbard.destroy_hole
+    operators = one_body_operators(Z, momentum, flavor)
+    correlator = correlator(Z, operators, operators)
 
     fig, ax = plt.subplots(2,2)
     style = {
