@@ -13,7 +13,7 @@ class PartitionFunction:
         self.nt = nt
 
         self.delta = self.beta / self.nt
-        self.taus = np.arange(nt) * self.delta if nt < float('inf') else np.linspace(0, beta, _continuum)
+        self.taus = np.arange(nt) * self.delta if nt < float('inf') else beta / _continuum * np.arange(_continuum)
 
         
 
