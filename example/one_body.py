@@ -45,13 +45,46 @@ def one_body_operators(Z, momentum, operator):
 
     return np.stack((o_plus, o_minus))
 
-    correlator = np.zeros((2,2, len(Z.taus)), dtype=complex)
-    correlator[0,0] = Z.correlator(o_plus.T.conj(), o_plus)
-    correlator[0,1] = Z.correlator(o_plus.T.conj(), o_minus)
-    correlator[1,0] = Z.correlator(o_minus.T.conj(), o_plus)
-    correlator[1,1] = Z.correlator(o_minus.T.conj(), o_minus)
+def two_body_operator(Z, Spin, Isospin, momenta):
+    # Spin (0, 0)
+    # Isospin (1, -1)
+    # momenta.shape = (2,2)
 
-    return correlator
+    # fourier amplitudes
+    c0_plus  = Z.H.Lattice.fourier(momenta[0], +1)
+    c0_minus = Z.H.Lattice.fourier(momenta[0], -1)
+    c1_plus  = Z.H.Lattice.fourier(momenta[1], +1)
+    c1_minus = Z.H.Lattice.fourier(momenta[1], -1)
+
+    if Spin[0] == 1 and Isospin[0] == 1 and Spin[1] in (-1, +1) and Isospin[1] in (-1, +1):
+        if Spin[1] == -1 and Isospin[1] == -1:
+            operator0 = Z.H.destroy_particle
+            operator1 = Z.H.destroy_particle
+        elif Spin[1] == +1 and Isospin[1] == +1:
+            operator0 = Z.H.create_particle
+            operator1 = Z.H.create_particle
+        elif Spin[1] == -1 and Isospin[1] == +1:
+            operator0 = Z.H.destroy_hole
+            operator1 = Z.H.destroy_hole
+        elif Spin[1] == +1 and Isospin[1] == -1:
+            operator0 = Z.H.create_hole
+            operator1 = Z.H.create_hole
+        else:
+            raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
+
+        o0_plus  = Z.H.operator(c0_plus,  operator0)
+        o0_minus = Z.H.operator(c0_minus, operator0)
+        o1_plus  = Z.H.operator(c1_plus,  operator1)
+        o1_minus = Z.H.operator(c1_minus, operator1)
+
+        return np.stack((
+            o0_plus @ o1_plus,
+            o0_plus @ o1_minus,
+            o0_minus @ o1_plus,
+            o0_minus @ o1_minus
+            ))
+
+    raise NotImplementedError('Currently only the dumbed spin/isospin channel is implemented.')
 
 if __name__ == '__main__':
 
@@ -76,9 +109,31 @@ if __name__ == '__main__':
     operators = one_body_operators(Z, momentum, flavor)
     C = correlator(Z, operators, operators)
 
-    fig,ax = plot_correlator(C)
+    fig,ax = plot_correlator(Z, C)
     ax[0,0].set_yscale('log')
     ax[1,1].set_yscale('log')
     fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} {args.species} p={momentum}')
+
+    for Spin, Isospin in (
+            # ((S, Sz), (I, Iz))
+            ((1, +1), (1,+1)),
+            ((1, +1), (1,-1)),
+            ((1, -1), (1,+1)),
+            ((1, -1), (1,-1)),
+            # ... and other combinations not yet implemented ...
+            ):
+        for TotalMomentum in lattice.momenta:
+            operators = []
+            for p, k in lattice.momentum_pairs_totaling(TotalMomentum):
+                momenta = np.stack((p, k))
+                operators.append(two_body_operator(Z, Spin, Isospin, momenta))
+
+            C = np.zeros((len(operators), len(operators), 4, 4, len(Z.taus)), dtype=complex)
+            for i, sink in enumerate(operators):
+                for j, source in enumerate(operators):
+                    C[i,j] = correlator(Z, sink, source)
+
+                    fig, ax = plot_correlator(Z, C[0,0])
+                    fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} S={Spin[0]} Sz={Spin[1]} I={Isospin[0]} Iz={Isospin[1]} P={TotalMomentum} p={i}, {j}')
 
     plt.show()
