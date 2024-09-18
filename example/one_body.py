@@ -17,7 +17,7 @@ def correlator(Z, sink, source):
 
     return correlator
 
-def plot_correlator(C):
+def plot_correlator(Z, C):
     fig, ax = plt.subplots(*C.shape[:2])
     style = {
             'marker': '.', 'linestyle': 'none',
