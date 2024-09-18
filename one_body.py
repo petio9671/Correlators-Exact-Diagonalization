@@ -24,8 +24,8 @@ def one_body_operators(Z, momentum, operator):
     c_minus = Z.H.Lattice.fourier(momentum, -1)
 
     # band operators
-    o_plus  = hubbard.operator(c_plus,  operator)
-    o_minus = hubbard.operator(c_minus, operator)
+    o_plus  = Z.H.operator(c_plus,  operator)
+    o_minus = Z.H.operator(c_minus, operator)
 
     return np.stack((o_plus, o_minus))
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     momentum = lattice.momenta[args.momentum]
     flavor = hubbard.destroy_particle if (args.species == 'particle') else hubbard.destroy_hole
     operators = one_body_operators(Z, momentum, flavor)
-    correlator = correlator(Z, operators, operators)
+    C = correlator(Z, operators, operators)
 
     fig, ax = plt.subplots(2,2)
     style = {
