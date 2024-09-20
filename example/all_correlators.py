@@ -63,34 +63,16 @@ if __name__ == '__main__':
                 pdf.save(fig)
                 plt.close(fig)
 
-        for Spin, Isospin in (
-                # ((S, Sz), (I, Iz))
-                ((1, +1), (1, +1)),
-                ((1, 0), (1, +1)),
-                ((1, -1), (1, +1)),
-                ((1, +1), (1, 0)),
-                ((1, 0), (1, 0)),
-                ((1, -1), (1, 0)),
-                ((1, +1), (1, -1)),
-                ((1, 0), (1, -1)),
-                ((1, -1), (1, -1)),
-                # another table
-                ((0, 0), (1, +1)),
-                ((0, 0), (1, 0)),
-                ((0, 0), (1, -1)),
-                # another table
-                ((1, +1), (0, 0)),
-                ((1, 0), (0, 0)),
-                ((1, -1), (0, 0)),
-                # another table
-                ((0, 0), (0, 0))
+        for Spin, Isospin, TotalMomentum in product(
+                ((0, 0), (1, +1), (1, 0), (1, -1)),
+                ((0, 0), (1, +1), (1, 0), (1, -1)),
+                lattice.momenta,
                 ):
-            for TotalMomentum in lattice.momenta:
-                C = two_body_correlator(Z, Spin, Isospin, TotalMomentum)
-                for i, j in product(range(C.shape[0]), range(C.shape[1])):
-                    fig, ax = Z.plot_correlator(C[i,j])
-                    fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} S={Spin[0]} Sz={Spin[1]} I={Isospin[0]} Iz={Isospin[1]} P={TotalMomentum} p={i}, {j}')
-                    fig.tight_layout()
+            C = two_body_correlator(Z, Spin, Isospin, TotalMomentum)
+            for i, j in product(range(C.shape[0]), range(C.shape[1])):
+                fig, ax = Z.plot_correlator(C[i,j])
+                fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} S={Spin[0]} Sz={Spin[1]} I={Isospin[0]} Iz={Isospin[1]} P={TotalMomentum} p={i}, {j}')
+                fig.tight_layout()
 
-                    pdf.save(fig)
-                    plt.close(fig)
+                pdf.save(fig)
+                plt.close(fig)
