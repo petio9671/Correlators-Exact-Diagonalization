@@ -3,6 +3,8 @@ from scipy import linalg
 import scipy as sc
 from functools import cached_property
 
+import matplotlib.pyplot as plt
+
 from beehive import format
 
 class PartitionFunction:
@@ -47,5 +49,21 @@ class PartitionFunction:
             c[t] = (self._transfers[self.nt-t] @ sink @ self._transfers[t] @ source).trace()
 
         return c / self.value
+
+    def plot_correlator(self, C):
+        fig, ax = plt.subplots(*C.shape[:2])
+        style = {
+                'marker': '.', 'linestyle': 'none',
+                } if self.nt < float('inf') else {
+                'marker': 'none',
+                }
+
+        for C_sink, ax_sink in zip(C, ax):
+            for C_sink_source, ax_sink_source in zip(C_sink, ax_sink):
+                ax_sink_source.plot(self.taus[1:], C_sink_source[1:].real, **style, label='real')
+                ax_sink_source.plot(self.taus[1:], C_sink_source[1:].imag, **style, label='imaginary')
+
+        ax[0, -1].legend()
+        return fig, ax
 
 

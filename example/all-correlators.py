@@ -17,22 +17,6 @@ def correlator(Z, sink, source):
 
     return correlator
 
-def plot_correlator(Z, C):
-    fig, ax = plt.subplots(*C.shape[:2])
-    style = {
-            'marker': '.', 'linestyle': 'none',
-            } if args.nt < float('inf') else {
-            'marker': 'none',
-            }
-
-    for C_sink, ax_sink in zip(C, ax):
-        for C_sink_source, ax_sink_source in zip(C_sink, ax_sink):
-            ax_sink_source.plot(Z.taus[1:], C_sink_source[1:].real, **style, label='real')
-            ax_sink_source.plot(Z.taus[1:], C_sink_source[1:].imag, **style, label='imaginary')
-
-    ax[0, -1].legend()
-    return fig, ax
-
 def one_body_operators(Z, momentum, operator):
 
     # fourier amplitudes
@@ -109,7 +93,7 @@ if __name__ == '__main__':
     operators = one_body_operators(Z, momentum, flavor)
     C = correlator(Z, operators, operators)
 
-    fig,ax = plot_correlator(Z, C)
+    fig,ax = Z.plot_correlator(C)
     ax[0,0].set_yscale('log')
     ax[1,1].set_yscale('log')
     fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} {args.species} p={momentum}')
@@ -133,7 +117,7 @@ if __name__ == '__main__':
                 for j, source in enumerate(operators):
                     C[i,j] = correlator(Z, sink, source)
 
-                    fig, ax = plot_correlator(Z, C[0,0])
+                    fig, ax = Z.plot_correlator(C[i,j])
                     fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} S={Spin[0]} Sz={Spin[1]} I={Isospin[0]} Iz={Isospin[1]} P={TotalMomentum} p={i}, {j}')
 
     plt.show()
