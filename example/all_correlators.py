@@ -59,6 +59,7 @@ if __name__ == '__main__':
                 ax[0,0].set_yscale('log')
                 ax[1,1].set_yscale('log')
                 fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} {species} p={momentum}')
+                fig.tight_layout()
                 pdf.save(fig)
                 plt.close(fig)
 
@@ -89,6 +90,7 @@ if __name__ == '__main__':
                 for i, j in product(range(C.shape[0]), range(C.shape[1])):
                     fig, ax = Z.plot_correlator(C[i,j])
                     fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} S={Spin[0]} Sz={Spin[1]} I={Isospin[0]} Iz={Isospin[1]} P={TotalMomentum} p={i}, {j}')
+                    fig.tight_layout()
 
                     pdf.save(fig)
                     plt.close(fig)

@@ -61,8 +61,11 @@ class PartitionFunction:
 
         return correlator
 
-    def plot_correlator(self, C):
-        fig, ax = plt.subplots(*C.shape[:2])
+    def plot_correlator(self, C, axsize=(4, 4), **kwargs):
+
+        fig, ax = plt.subplots(*C.shape[:2],
+                               figsize=(axsize[0] * C.shape[0], axsize[1] * C.shape[1]),
+                               )
         style = {
                 'marker': '.', 'linestyle': 'none',
                 } if self.nt < float('inf') else {
