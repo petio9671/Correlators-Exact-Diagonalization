@@ -1,7 +1,11 @@
 import numpy as np
 from scipy import linalg
 import scipy as sc
+
+from itertools import product
 from functools import cached_property
+
+import matplotlib.pyplot as plt
 
 from beehive import format
 
@@ -47,5 +51,33 @@ class PartitionFunction:
             c[t] = (self._transfers[self.nt-t] @ sink @ self._transfers[t] @ source).trace()
 
         return c / self.value
+
+    def correlator_matrix(self, sink, source):
+
+        I, J = len(sink), len(source)
+        correlator = np.zeros((I, J, len(self.taus)), dtype=complex)
+        for i, j in product(range(I), range(J)):
+            correlator[i,j] = self.correlator(sink[i].T.conj(), source[j])
+
+        return correlator
+
+    def plot_correlator(self, C, axsize=(4, 4), **kwargs):
+
+        fig, ax = plt.subplots(*C.shape[:2],
+                               figsize=(axsize[0] * C.shape[0], axsize[1] * C.shape[1]),
+                               )
+        style = {
+                'marker': '.', 'linestyle': 'none',
+                } if self.nt < float('inf') else {
+                'marker': 'none',
+                }
+
+        for C_sink, ax_sink in zip(C, ax):
+            for C_sink_source, ax_sink_source in zip(C_sink, ax_sink):
+                ax_sink_source.plot(self.taus[1:], C_sink_source[1:].real, **style, label='real')
+                ax_sink_source.plot(self.taus[1:], C_sink_source[1:].imag, **style, label='imaginary')
+
+        ax[0, -1].legend()
+        return fig, ax
 
 

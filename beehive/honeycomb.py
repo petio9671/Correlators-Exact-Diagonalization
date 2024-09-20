@@ -207,3 +207,10 @@ class Honeycomb:
         ax.set_ylim((-2.5,+2.5))
         ax.axis('off')
         ax.set_aspect(1)
+
+    def momentum_pairs_totaling(self, total_momentum):
+        for first_momentum in self.momenta:
+            second_momentum = self.mod_bz(total_momentum-first_momentum)
+            if np.array(tuple(self.eq_mod_BZ(second_momentum, l) for l in self.momenta)).any():
+                yield first_momentum, second_momentum
+

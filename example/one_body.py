@@ -8,31 +8,6 @@ import scipy as sc
 import logging
 logger = logging.getLogger(__name__)
 
-def correlator(Z, sink, source):
-
-    I, J = len(sink), len(source)
-    correlator = np.zeros((I, J, len(Z.taus)), dtype=complex)
-    for i, j in product(range(I), range(J)):
-        correlator[i,j] = Z.correlator(sink[i].T.conj(), source[j])
-
-    return correlator
-
-def plot_correlator(C):
-    fig, ax = plt.subplots(*C.shape[:2])
-    style = {
-            'marker': '.', 'linestyle': 'none',
-            } if args.nt < float('inf') else {
-            'marker': 'none',
-            }
-
-    for C_sink, ax_sink in zip(C, ax):
-        for C_sink_source, ax_sink_source in zip(C_sink, ax_sink):
-            ax_sink_source.plot(Z.taus[1:], C_sink_source[1:].real, **style, label='real')
-            ax_sink_source.plot(Z.taus[1:], C_sink_source[1:].imag, **style, label='imaginary')
-
-    ax[0, -1].legend()
-    return fig, ax
-
 def one_body_operators(Z, momentum, operator):
 
     # fourier amplitudes
@@ -45,13 +20,10 @@ def one_body_operators(Z, momentum, operator):
 
     return np.stack((o_plus, o_minus))
 
-    correlator = np.zeros((2,2, len(Z.taus)), dtype=complex)
-    correlator[0,0] = Z.correlator(o_plus.T.conj(), o_plus)
-    correlator[0,1] = Z.correlator(o_plus.T.conj(), o_minus)
-    correlator[1,0] = Z.correlator(o_minus.T.conj(), o_plus)
-    correlator[1,1] = Z.correlator(o_minus.T.conj(), o_minus)
-
-    return correlator
+def one_body_correlator(Z, hubbard_species, momentum):
+    flavor = Z.H.destroy_particle if (hubbard_species == 'particle') else Z.H.destroy_hole
+    operators = one_body_operators(Z, momentum, flavor)
+    return Z.correlator_matrix(operators, operators)
 
 if __name__ == '__main__':
 
@@ -72,11 +44,9 @@ if __name__ == '__main__':
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt)
 
     momentum = lattice.momenta[args.momentum]
-    flavor = hubbard.destroy_particle if (args.species == 'particle') else hubbard.destroy_hole
-    operators = one_body_operators(Z, momentum, flavor)
-    C = correlator(Z, operators, operators)
+    C = one_body_correlator(Z, args.species, momentum)
 
-    fig,ax = plot_correlator(C)
+    fig,ax = Z.plot_correlator(C)
     ax[0,0].set_yscale('log')
     ax[1,1].set_yscale('log')
     fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} {args.species} p={momentum}')
