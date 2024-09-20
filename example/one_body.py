@@ -8,15 +8,6 @@ import scipy as sc
 import logging
 logger = logging.getLogger(__name__)
 
-def correlator(Z, sink, source):
-
-    I, J = len(sink), len(source)
-    correlator = np.zeros((I, J, len(Z.taus)), dtype=complex)
-    for i, j in product(range(I), range(J)):
-        correlator[i,j] = Z.correlator(sink[i].T.conj(), source[j])
-
-    return correlator
-
 def one_body_operators(Z, momentum, operator):
 
     # fourier amplitudes
@@ -50,7 +41,7 @@ if __name__ == '__main__':
     momentum = lattice.momenta[args.momentum]
     flavor = hubbard.destroy_particle if (args.species == 'particle') else hubbard.destroy_hole
     operators = one_body_operators(Z, momentum, flavor)
-    C = correlator(Z, operators, operators)
+    C = Z.correlator_matrix(operators, operators)
 
     fig,ax = Z.plot_correlator(C)
     ax[0,0].set_yscale('log')

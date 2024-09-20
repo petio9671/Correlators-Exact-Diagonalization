@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import linalg
 import scipy as sc
+
+from itertools import product
 from functools import cached_property
 
 import matplotlib.pyplot as plt
@@ -49,6 +51,15 @@ class PartitionFunction:
             c[t] = (self._transfers[self.nt-t] @ sink @ self._transfers[t] @ source).trace()
 
         return c / self.value
+
+    def correlator_matrix(self, sink, source):
+
+        I, J = len(sink), len(source)
+        correlator = np.zeros((I, J, len(self.taus)), dtype=complex)
+        for i, j in product(range(I), range(J)):
+            correlator[i,j] = self.correlator(sink[i].T.conj(), source[j])
+
+        return correlator
 
     def plot_correlator(self, C):
         fig, ax = plt.subplots(*C.shape[:2])
