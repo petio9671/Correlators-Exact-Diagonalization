@@ -1,0 +1,13 @@
+# MATH
+
+numpy>=1.21
+scipy>=1.14
+
+# IO
+
+h5py>=3.7
+tqdm>=4.64
+
+# PLOTTING
+
+matplotlib>=3.5.2

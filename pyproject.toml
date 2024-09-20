@@ -1,0 +1,24 @@
+[project]
+
+name = "beehive"
+description = "Exact methods for small grand-canonical Euclidean-time correlators"
+authors = [
+    { name = "Petar Sinilkov", email = "p.sinilkov@fz-juelich.de" },
+    { name = "Evan Berkowitz", email = "e.berkowitz@fz-juelich.de" }
+]
+
+dynamic = ["dependencies"]
+version = "0.0.0"
+
+[options]
+
+install_requires = [
+    ]
+
+[tool.setuptools]
+py-modules = [
+    "beehive",
+]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
