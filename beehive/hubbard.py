@@ -3,7 +3,7 @@ from scipy import linalg
 import scipy as sc
 from functools import cached_property
 
-from exact import format, sparse_array
+from beehive import format, sparse_array
 
 class Hubbard:
 

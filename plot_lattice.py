@@ -1,5 +1,5 @@
 import numpy as np
-import exact
+import beehive
 import matplotlib.pyplot as plt
 
 import scipy as sc
@@ -9,13 +9,13 @@ if __name__ == '__main__':
 
     import argparse
 
-    parser = exact.parse.ArgumentParser('L')
+    parser = beehive.parse.ArgumentParser('L')
     parser.add_argument('--bz', default=False, action='store_true', help='Show the Brillouin zone rather than the spatial lattice')
     parser.add_argument('--pdf', default='', type=str)
 
     args = parser.parse_args()
 
-    lattice = exact.Honeycomb(*args.L)
+    lattice = beehive.Honeycomb(*args.L)
 
     print(lattice.momenta)
 

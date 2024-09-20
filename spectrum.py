@@ -1,5 +1,5 @@
 import numpy as np
-import exact
+import beehive
 import matplotlib.pyplot as plt
 
 import scipy as sc
@@ -12,12 +12,12 @@ if __name__ == '__main__':
 
     import argparse
 
-    parser = exact.parse.ArgumentParser('L', 'U')
+    parser = beehive.parse.ArgumentParser('L', 'U')
     parser.add_argument('--pdf', default='', type=str)
     args = parser.parse_args()
 
-    lattice = exact.Honeycomb(*args.L)
-    hubbard = exact.Hubbard(lattice, args.U)
+    lattice = beehive.Honeycomb(*args.L)
+    hubbard = beehive.Hubbard(lattice, args.U)
     energies, unitary = np.linalg.eigh(hubbard.Hamiltonian.toarray())
 
     fig, ax = plt.subplots(1,1)

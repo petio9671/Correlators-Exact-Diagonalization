@@ -1,6 +1,6 @@
 from itertools import product
 import numpy as np
-import exact
+import beehive
 import matplotlib.pyplot as plt
 
 import scipy as sc
@@ -56,7 +56,7 @@ def one_body_operators(Z, momentum, operator):
 if __name__ == '__main__':
 
 
-    parser = exact.parse.ArgumentParser('L', 'U', 'beta', 'nt', 'momentum', 'species')
+    parser = beehive.parse.ArgumentParser('L', 'U', 'beta', 'nt', 'momentum', 'species')
     parser.add_argument('--versions', default=False, action='store_true')
 
     args = parser.parse_args()
@@ -66,10 +66,10 @@ if __name__ == '__main__':
         print('scipy', sc.__version__)
         exit(0)
 
-    lattice = exact.Honeycomb(*args.L)
-    hubbard = exact.Hubbard(lattice, args.U)
+    lattice = beehive.Honeycomb(*args.L)
+    hubbard = beehive.Hubbard(lattice, args.U)
 
-    Z = exact.PartitionFunction(hubbard, args.beta, args.nt)
+    Z = beehive.PartitionFunction(hubbard, args.beta, args.nt)
 
     momentum = lattice.momenta[args.momentum]
     flavor = hubbard.destroy_particle if (args.species == 'particle') else hubbard.destroy_hole

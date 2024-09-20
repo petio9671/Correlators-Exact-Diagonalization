@@ -3,7 +3,7 @@ from scipy import linalg
 import scipy as sc
 from functools import cached_property
 
-from exact import format
+from beehive import format
 
 class PartitionFunction:
 
