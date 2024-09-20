@@ -20,6 +20,11 @@ def one_body_operators(Z, momentum, operator):
 
     return np.stack((o_plus, o_minus))
 
+def one_body_correlator(Z, hubbard_species, momentum):
+    flavor = Z.H.destroy_particle if (hubbard_species == 'particle') else Z.H.destroy_hole
+    operators = one_body_operators(Z, momentum, flavor)
+    return Z.correlator_matrix(operators, operators)
+
 if __name__ == '__main__':
 
 
@@ -39,9 +44,7 @@ if __name__ == '__main__':
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt)
 
     momentum = lattice.momenta[args.momentum]
-    flavor = hubbard.destroy_particle if (args.species == 'particle') else hubbard.destroy_hole
-    operators = one_body_operators(Z, momentum, flavor)
-    C = Z.correlator_matrix(operators, operators)
+    C = one_body_correlator(Z, args.species, momentum)
 
     fig,ax = Z.plot_correlator(C)
     ax[0,0].set_yscale('log')
