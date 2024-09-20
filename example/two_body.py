@@ -36,6 +36,34 @@ def two_body_operator(Z, Spin, Isospin, momenta):
             operator1 = Z.H.create_hole
         else:
             raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
+        
+        o0_plus  = Z.H.operator(c0_plus,  operator0)
+        o0_minus = Z.H.operator(c0_minus, operator0)
+        o1_plus  = Z.H.operator(c1_plus,  operator1)
+        o1_minus = Z.H.operator(c1_minus, operator1)
+        
+        return np.stack((
+            o0_plus @ o1_plus,
+            o0_plus @ o1_minus,
+            o0_minus @ o1_plus,
+            o0_minus @ o1_minus
+            ))
+        
+    if (Spin[0] == 1) and (Isospin[0] == 1) and ((Spin[1] == 0) ^ (Isospin[1] == 0)):
+        if Spin[1] == 0 and Isospin[1] == +1:
+            operator0 = Z.H.create_particle
+            operator1 = Z.H.destroy_hole
+        elif Spin[1] == 0 and Isospin[1] == -1:
+            operator0 = Z.H.destroy_particle
+            operator1 = Z.H.create_hole
+        elif Spin[1] == +1 and Isospin[1] == 0:
+            operator0 = Z.H.create_particle
+            operator1 = Z.H.create_hole
+        elif Spin[1] == -1 and Isospin[1] == 0:
+            operator0 = Z.H.destroy_particle
+            operator1 = Z.H.destroy_hole
+        else:
+            raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
 
         o0_plus  = Z.H.operator(c0_plus,  operator0)
         o0_minus = Z.H.operator(c0_minus, operator0)
@@ -43,13 +71,133 @@ def two_body_operator(Z, Spin, Isospin, momenta):
         o1_minus = Z.H.operator(c1_minus, operator1)
 
         return np.stack((
-            o0_plus @ o1_plus,
-            o0_plus @ o1_minus,
-            o0_minus @ o1_plus,
-            o0_minus @ o1_minus
+            (o0_plus @ o1_plus + o1_plus @ o0_plus) / np.sqrt(2),
+            (o0_plus @ o1_minus + o1_plus @ o0_minus) / np.sqrt(2),
+            (o0_minus @ o1_plus + o1_minus @ o0_plus) / np.sqrt(2),
+            (o0_minus @ o1_minus + o1_minus @ o0_minus) / np.sqrt(2)
             ))
+    
+    if Spin[1] == 0 and Isospin[1] == 0:
+        operator0 = Z.H.destroy_particle
+        operator1 = Z.H.create_particle
+        operator2 = Z.H.destroy_hole
+        operator3 = Z.H.create_hole
 
-    raise NotImplementedError('Currently only the dumbed spin/isospin channel is implemented.')
+        o0_plus  = Z.H.operator(c0_plus,  operator0)
+        o0_minus = Z.H.operator(c0_minus, operator0)
+        o1_plus  = Z.H.operator(c1_plus,  operator1)
+        o1_minus = Z.H.operator(c1_minus, operator1)
+        o2_plus  = Z.H.operator(c0_plus,  operator2)
+        o2_minus = Z.H.operator(c0_minus, operator2)
+        o3_plus  = Z.H.operator(c1_plus,  operator3)
+        o3_minus = Z.H.operator(c1_minus, operator3)
+
+        if Spin[0] == 0 and Isospin[0] == 0:
+            return np.stack((
+                (o0_plus @ o1_plus + o1_plus @ o0_plus + o2_plus @ o3_plus + o3_plus @ o2_plus) / 2,
+                (o0_plus @ o1_minus + o1_plus @ o0_minus + o2_plus @ o3_minus + o3_plus @ o2_minus) / 2,
+                (o0_minus @ o1_plus + o1_minus @ o0_plus + o2_minus @ o3_plus + o3_minus @ o2_plus) / 2,
+                (o0_minus @ o1_minus + o1_minus @ o0_minus + o2_minus @ o3_minus + o3_minus @ o2_minus) / 2
+                ))
+        elif Spin[0] == 0 and Isospin[0] == 1:
+            return np.stack((
+                (- o0_plus @ o1_plus + o1_plus @ o0_plus + o2_plus @ o3_plus - o3_plus @ o2_plus) / 2,
+                (- o0_plus @ o1_minus + o1_plus @ o0_minus + o2_plus @ o3_minus - o3_plus @ o2_minus) / 2,
+                (- o0_minus @ o1_plus + o1_minus @ o0_plus + o2_minus @ o3_plus - o3_minus @ o2_plus) / 2,
+                (- o0_minus @ o1_minus + o1_minus @ o0_minus + o2_minus @ o3_minus - o3_minus @ o2_minus) / 2
+                ))
+        elif Spin[0] == 1 and Isospin[0] == 0:
+            return np.stack((
+                (o0_plus @ o1_plus - o1_plus @ o0_plus + o2_plus @ o3_plus - o3_plus @ o2_plus) / 2,
+                (o0_plus @ o1_minus - o1_plus @ o0_minus + o2_plus @ o3_minus - o3_plus @ o2_minus) / 2,
+                (o0_minus @ o1_plus - o1_minus @ o0_plus + o2_minus @ o3_plus - o3_minus @ o2_plus) / 2,
+                (o0_minus @ o1_minus - o1_minus @ o0_minus + o2_minus @ o3_minus - o3_minus @ o2_minus) / 2
+                ))
+        elif Spin[0] == 1 and Isospin[0] == 1:
+            return np.stack((
+                (o0_plus @ o1_plus + o1_plus @ o0_plus - o2_plus @ o3_plus - o3_plus @ o2_plus) / 2,
+                (o0_plus @ o1_minus + o1_plus @ o0_minus - o2_plus @ o3_minus - o3_plus @ o2_minus) / 2,
+                (o0_minus @ o1_plus + o1_minus @ o0_plus - o2_minus @ o3_plus - o3_minus @ o2_plus) / 2,
+                (o0_minus @ o1_minus + o1_minus @ o0_minus - o2_minus @ o3_minus - o3_minus @ o2_minus) / 2
+                ))
+        else:
+            raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
+
+    if (Spin[0] == 0 and Isospin[0] == 1) or (Spin[0] == 1 and Isospin[0] == 0):
+        if Spin[1] == 0 and Isospin[1] == +1:
+            operator0 = Z.H.create_particle
+            operator1 = Z.H.destroy_hole
+        elif Spin[1] == 0 and Isospin[1] == -1:
+            operator0 = Z.H.destroy_particle
+            operator1 = Z.H.create_hole
+        elif Spin[1] == +1 and Isospin[1] == 0:
+            operator0 = Z.H.create_particle
+            operator1 = Z.H.create_hole
+        elif Spin[1] == -1 and Isospin[1] == 0:
+            operator0 = Z.H.destroy_particle
+            operator1 = Z.H.destroy_hole
+        else:
+            raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
+
+        o0_plus  = Z.H.operator(c0_plus,  operator0)
+        o0_minus = Z.H.operator(c0_minus, operator0)
+        o1_plus  = Z.H.operator(c1_plus,  operator1)
+        o1_minus = Z.H.operator(c1_minus, operator1)
+
+        return np.stack((
+            (o0_plus @ o1_plus - o1_plus @ o0_plus) / np.sqrt(2),
+            (o0_plus @ o1_minus - o1_plus @ o0_minus) / np.sqrt(2),
+            (o0_minus @ o1_plus - o1_minus @ o0_plus) / np.sqrt(2),
+            (o0_minus @ o1_minus - o1_minus @ o0_minus) / np.sqrt(2)
+            ))
+    
+    if Spin[1] == 0 and Isospin[1] == 0:
+        operator0 = Z.H.destroy_particle
+        operator1 = Z.H.create_particle
+        operator2 = Z.H.destroy_hole
+        operator3 = Z.H.create_hole
+
+        o0_plus  = Z.H.operator(c0_plus,  operator0)
+        o0_minus = Z.H.operator(c0_minus, operator0)
+        o1_plus  = Z.H.operator(c1_plus,  operator1)
+        o1_minus = Z.H.operator(c1_minus, operator1)
+        o2_plus  = Z.H.operator(c0_plus,  operator2)
+        o2_minus = Z.H.operator(c0_minus, operator2)
+        o3_plus  = Z.H.operator(c1_plus,  operator3)
+        o3_minus = Z.H.operator(c1_minus, operator3)
+
+        if Spin[0] == 0 and Isospin[0] == 0:
+            return np.stack((
+                (o0_plus @ o1_plus + o1_plus @ o0_plus + o2_plus @ o3_plus + o3_plus @ o2_plus) / 2,
+                (o0_plus @ o1_minus + o1_plus @ o0_minus + o2_plus @ o3_minus + o3_plus @ o2_minus) / 2,
+                (o0_minus @ o1_plus + o1_minus @ o0_plus + o2_minus @ o3_plus + o3_minus @ o2_plus) / 2,
+                (o0_minus @ o1_minus + o1_minus @ o0_minus + o2_minus @ o3_minus + o3_minus @ o2_minus) / 2
+                ))
+        elif Spin[0] == 0 and Isospin[0] == 1:
+            return np.stack((
+                (- o0_plus @ o1_plus + o1_plus @ o0_plus + o2_plus @ o3_plus - o3_plus @ o2_plus) / 2,
+                (- o0_plus @ o1_minus + o1_plus @ o0_minus + o2_plus @ o3_minus - o3_plus @ o2_minus) / 2,
+                (- o0_minus @ o1_plus + o1_minus @ o0_plus + o2_minus @ o3_plus - o3_minus @ o2_plus) / 2,
+                (- o0_minus @ o1_minus + o1_minus @ o0_minus + o2_minus @ o3_minus - o3_minus @ o2_minus) / 2
+                ))
+        elif Spin[0] == 1 and Isospin[0] == 0:
+            return np.stack((
+                (o0_plus @ o1_plus - o1_plus @ o0_plus + o2_plus @ o3_plus - o3_plus @ o2_plus) / 2,
+                (o0_plus @ o1_minus - o1_plus @ o0_minus + o2_plus @ o3_minus - o3_plus @ o2_minus) / 2,
+                (o0_minus @ o1_plus - o1_minus @ o0_plus + o2_minus @ o3_plus - o3_minus @ o2_plus) / 2,
+                (o0_minus @ o1_minus - o1_minus @ o0_minus + o2_minus @ o3_minus - o3_minus @ o2_minus) / 2
+                ))
+        elif Spin[0] == 1 and Isospin[0] == 1:
+            return np.stack((
+                (o0_plus @ o1_plus + o1_plus @ o0_plus - o2_plus @ o3_plus - o3_plus @ o2_plus) / 2,
+                (o0_plus @ o1_minus + o1_plus @ o0_minus - o2_plus @ o3_minus - o3_plus @ o2_minus) / 2,
+                (o0_minus @ o1_plus + o1_minus @ o0_plus - o2_minus @ o3_plus - o3_minus @ o2_plus) / 2,
+                (o0_minus @ o1_minus + o1_minus @ o0_minus - o2_minus @ o3_minus - o3_minus @ o2_minus) / 2
+                ))
+        else:
+            raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')    
+
+    raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
 
 def two_body_correlator(Z, Spin, Isospin, total_momentum):
     lattice = Z.H.Lattice

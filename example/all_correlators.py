@@ -64,11 +64,25 @@ if __name__ == '__main__':
 
         for Spin, Isospin in (
                 # ((S, Sz), (I, Iz))
-                ((1, +1), (1,+1)),
-                ((1, +1), (1,-1)),
-                ((1, -1), (1,+1)),
-                ((1, -1), (1,-1)),
-                # ... and other combinations not yet implemented ...
+                ((1, +1), (1, +1)),
+                ((1, 0), (1, +1)),
+                ((1, -1), (1, +1)),
+                ((1, +1), (1, 0)),
+                ((1, 0), (1, 0)),
+                ((1, -1), (1, 0)),
+                ((1, +1), (1, -1)),
+                ((1, 0), (1, -1)),
+                ((1, -1), (1, -1)),
+                # another table
+                ((0, 0), (1, +1)),
+                ((0, 0), (1, 0)),
+                ((0, 0), (1, -1)),
+                # another table
+                ((1, +1), (0, 0)),
+                ((1, 0), (0, 0)),
+                ((1, -1), (0, 0)),
+                # another table
+                ((0, 0), (0, 0))
                 ):
             for TotalMomentum in lattice.momenta:
                 C = two_body_correlator(Z, Spin, Isospin, TotalMomentum)
