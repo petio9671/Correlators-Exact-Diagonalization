@@ -11,6 +11,19 @@ logger = logging.getLogger(__name__)
 from one_body import one_body_correlator
 
 def two_body_operator(Z, Spin, Isospin, momenta):
+    """Calculate a two-body operator in the momentum space for a particular spin-isospin channel
+
+    Args:
+        Z (obj): partition function object
+        Spin (tuple of int): Spin and 3rd component of the spin
+        Isospin (tuple of int): Isopin and 3rd component of the isospin
+        momenta (ndarray): Momenta of the two single body particles
+
+    Returns:
+        sparse_array: Two-body operator in momentum space at a particular channel with 2 band combinations 
+        
+    """
+
     # Spin (0, 0)
     # Isospin (1, -1)
     # momenta.shape = (2,2)
@@ -154,9 +167,23 @@ def two_body_operator(Z, Spin, Isospin, momenta):
     raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
 
 def two_body_correlator(Z, Spin, Isospin, total_momentum):
+    """Calculate a two-body correlator with a total momentum for a particular spin-isospin channel
+
+    Args:
+        Z (obj): Partition function object
+        Spin (tuple of int): Spin and 3rd component of the spin
+        Isospin (tuple of int): Isopin and 3rd component of the isospin
+        total_momentum (ndarray): Total momentum of the system
+
+    Returns:
+        sparse_array: Correlator matrix
+        
+    """
+
     lattice = Z.H.Lattice
 
     operators = []
+    # Go through every possible combination that totals the momentum and save the operator
     for p, k in lattice.momentum_pairs_totaling(total_momentum):
         momenta = np.stack((p, k))
         operators.append(two_body_operator(Z, Spin, Isospin, momenta))
@@ -170,21 +197,22 @@ def two_body_correlator(Z, Spin, Isospin, total_momentum):
 
 if __name__ == '__main__':
 
-
     parser = beehive.parse.ArgumentParser('L', 'U', 'beta', 'nt', 'momentum', )
     parser.add_argument('--Spin', type=int, nargs=2, default=(+1, +1))
     parser.add_argument('--Isospin', type=int, nargs=2, default=(+1, +1))
     args = parser.parse_args()
 
-    lattice = beehive.Honeycomb(*args.L)
-    hubbard = beehive.Hubbard(lattice, args.U)
+    lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
+    hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the model
 
-    Z = beehive.PartitionFunction(hubbard, args.beta, args.nt)
+    Z = beehive.PartitionFunction(hubbard, args.beta, args.nt) # Instantiate the partition function
 
-    C = two_body_correlator(Z, args.Spin, args.Isospin, args.momentum)
+    totalMomentum = lattice.momenta[args.momentum]
+    C = two_body_correlator(Z, args.Spin, args.Isospin, totalMomentum) # Calculate the two-body correlation matrix
 
+    # Plot the correlator matrix
     for i, j in product(range(C.shape[0]), range(C.shape[1])):
         fig, ax = Z.plot_correlator(C[i,j])
-        fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} S={args.Spin[0]} Sz={args.Spin[1]} I={args.Isospin[0]} Iz={args.Isospin[1]} P={args.momentum} p={i}, {j}')
+        fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} (I={args.Isospin[0]} S={args.Spin[0]} Iz={args.Isospin[1]} Sz={args.Spin[1]}) P={totalMomentum} p={i}, {j}')
 
     plt.show()
