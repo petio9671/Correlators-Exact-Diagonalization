@@ -10,6 +10,15 @@ import matplotlib.pyplot as plt
 from beehive import format
 
 class PartitionFunction:
+    """This class implements the partition function and correlators.
+
+    Attributes:
+        H (obj): Model object
+        beta (float): Inverse temperature
+        nt (int): Number of timeslices
+        delta (float): Delta
+
+    """
 
     def __init__(self, H, beta, nt, _continuum = 100):
         self.H = H
@@ -23,6 +32,7 @@ class PartitionFunction:
 
     @cached_property
     def value(self):
+        """sparce_array: value of the partiton function"""
         if self.nt == float('inf'):
             return ( sc.sparse.linalg.expm(-self.beta*self.H.Hamiltonian) ).trace()
 
@@ -31,6 +41,14 @@ class PartitionFunction:
 
     @cached_property
     def _transfers(self):
+        """:list of sparse_array: Transfer matrix which is defined by
+
+            T(t) = \product_{t=(0,...,nt} ( exp^{-\delta K} exp^{-\delta V} )
+
+            where K and V are kinetic and interaction terms respetively
+            
+        """
+
         transfer_matrix = sc.sparse.linalg.expm(-self.delta*self.H.K()) @ sc.sparse.linalg.expm(-self.delta*self.H.V())
         transfers = [sc.sparse.eye(self.H.Hilbert_space_dimension, format=format)]
         for t in range(1,self.nt+1):
@@ -38,6 +56,24 @@ class PartitionFunction:
         return transfers
 
     def correlator(self, sink, source):
+        """Calculate descreet or continuum correlation function
+            If it is in the continuum it calculates
+            C(\tau) = exp^{-(\beta - \tau) H} @ sink @ exp^{-\tau H} @ source
+
+            Otherwise
+            C(\tau) = transfer[nt-\tau] @ sink @ transfer[\tau] @ source
+
+            where transfer is calculated by _transfers
+
+        Args:
+            sink (sparse_array): Operator at the sink
+            source (sparse_array): Operator at the source
+
+        Returns:
+            sparse_array: Correlation function
+        
+        """
+
         H = self.H.Hamiltonian
 
         if self.nt == float('inf'):
@@ -53,6 +89,16 @@ class PartitionFunction:
         return c / self.value
 
     def correlator_matrix(self, sink, source):
+        """Construct the band correlator matrix
+
+        Args:
+            sink (sparse_array): Operator at the sink
+            source (sparse_array): Operator at the source
+
+        Returns:
+            sparse_array: Correlator matrix
+        
+        """
 
         I, J = len(sink), len(source)
         correlator = np.zeros((I, J, len(self.taus)), dtype=complex)
@@ -62,6 +108,17 @@ class PartitionFunction:
         return correlator
 
     def plot_correlator(self, C, axsize=(4, 4), **kwargs):
+        """Plot correlator matrix
+
+        Args:
+            C (sparse_array): Correlator matrix
+            axsize (tuple of int, optional): size of the plot of the elements
+            **kwargs
+
+        Returns:
+            tuple: fig, ax
+        
+        """
 
         fig, ax = plt.subplots(*C.shape[:2],
                                figsize=(axsize[0] * C.shape[0], axsize[1] * C.shape[1]),

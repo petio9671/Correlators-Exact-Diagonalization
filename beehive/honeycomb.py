@@ -8,6 +8,15 @@ from beehive import format
 from matplotlib.patches import Polygon
 
 class Honeycomb:
+    """This class implements the Honeycomb lattice.
+
+    Attributes:
+        L (ndarray): Size of the lattice
+        unit_cells (int): Number of unit cells
+        sites (int): Number of sites
+        A_integers (ndarray): Integer positions of the unit cells in posiiton space (Same as position of A sites)
+
+    """
 
     a = np.sqrt(3)/2 * np.array([
         [np.sqrt(3), +1],
@@ -39,6 +48,7 @@ class Honeycomb:
         self.positions[0::2] = self.A_positions
         self.positions[1::2] = self.B_positions
 
+        # ToDo put labels on special momenta
         momentum_labels = {
             'gamma': np.array([0,0]),
         }
@@ -48,6 +58,8 @@ class Honeycomb:
 
     @cached_property
     def adjacency_list(self):
+        """:ndarray: Site adjacency array"""
+
         pos = self.positions
         separations = np.zeros((self.sites, self.sites))
         for i in range(self.sites):
@@ -70,6 +82,7 @@ class Honeycomb:
 
     @cached_property
     def hopping(self):
+        """:ndarray: Hopping matrix"""
 
         if self.L[0] == 1 and self.L[1] == 1:
             return np.array([[0., 1.], [1., 0.]])
@@ -94,6 +107,18 @@ class Honeycomb:
         ...
 
     def eq_mod_lattice(self, x, y, eps=1e-12):
+        """Check if 2 lattice sites are coinciding taking into account the lattice structure
+
+        Args:
+            x (list of float): First site
+            y (list of float): Second site
+            eps (float, optional): Tolerance of equality
+
+        Returns:
+            bool: True if they coincide, False otherwise
+        
+        """
+
         diff = x-y
 
         # Now we try to write diff as integer multiples of b
@@ -104,9 +129,19 @@ class Honeycomb:
         return (abs(np.round(m)-m)<eps) and (abs(np.round(n)-n)<eps)
 
     def fourier(self, momentum, band):
-        '''
-        band in ±1
-        '''
+        """Calculate the fourier amplitudes of a given mometum and band
+
+        Args:
+            momentum (list of float): Momentum
+            band (int): Plus or minus bands (±1)
+
+        Returns:
+            amplitudes (ndarray): Fourier amplitudes
+        
+        """
+
+        if band not in (-1, +1):
+            raise ValueError("Only +1 ot -1 values are allowed")
 
         fk = np.exp(1j*momentum[0]) + 2*np.exp(-1j*momentum[0]/2)*np.cos(np.sqrt(3)*momentum[1]/2)
         exp_theta = np.exp(-1j*np.angle(fk))
@@ -129,6 +164,8 @@ class Honeycomb:
 
     @cached_property
     def momenta(self):
+        """:ndarray: Array of momenta"""
+
         num_momenta = self.unit_cells
 
         momenta = np.zeros((num_momenta, 2))
@@ -138,6 +175,16 @@ class Honeycomb:
         return momenta
 
     def mod_bz(self, p):
+        """Mod a momentum back into the first BZ
+
+        Args:
+            p (ndarray): Momentum that is on the lattice
+
+        Returns:
+            p (ndarray): Same mometum but mapped back into the first BZ
+        
+        """
+
         # This is a stupid brute-force method that could probably be much smarter.
         in_bz = False
         while not in_bz:
@@ -165,6 +212,18 @@ class Honeycomb:
         return p
 
     def eq_mod_BZ(self, k, q, eps=1e-12):
+        """Check if 2 momenta are coinciding taking into account the lattice structure
+
+        Args:
+            k (list of float): First momentum
+            q (list of float): Second momentum
+            eps (float, optional): Tolerance of equality
+
+        Returns:
+            bool: True if k and q coincide, False otherwise
+        
+        """
+
         diff = k-q
 
         # Now we try to write diff as integer multiples of b
@@ -176,12 +235,27 @@ class Honeycomb:
 
 
     def plot_lattice(self, ax, colors=('red', 'blue')):
+        """Plot the lattice
+
+        Args:
+            ax (matplotlib.Axes): matplotlib Axes
+            colors (str, optional): Colors of the bipartide sites
+        
+        """
         
         ax.scatter(self.positions[0::2, 0], self.positions[0::2, 1], color=colors[0])
         ax.scatter(self.positions[1::2, 0], self.positions[1::2, 1], color=colors[1])
         ax.set_aspect('auto')
 
     def plot_bz(self, ax, **kwargs):
+        """Plot the BZ
+
+        Args:
+            ax: matplotlib Axes
+            **kwargs
+        
+        """
+
         momenta = self.momenta
         b = self.b
         boundary = 1./3 * np.array([
@@ -209,6 +283,16 @@ class Honeycomb:
         ax.set_aspect(1)
 
     def momentum_pairs_totaling(self, total_momentum):
+        """Calculate all possible pairs of momenta given a total momentum
+
+        Args:
+            total_momentum (ndarray): Total momentum
+
+        Yields:
+            tuple (ndarray): Two momenta of that total the input param
+        
+        """
+
         for first_momentum in self.momenta:
             second_momentum = self.mod_bz(total_momentum-first_momentum)
             if np.array(tuple(self.eq_mod_BZ(second_momentum, l) for l in self.momenta)).any():
