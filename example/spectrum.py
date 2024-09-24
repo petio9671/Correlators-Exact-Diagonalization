@@ -18,6 +18,8 @@ if __name__ == '__main__':
 
     lattice = beehive.Honeycomb(*args.L)
     hubbard = beehive.Hubbard(lattice, args.U)
+    print(hubbard)
+
     energies, unitary = np.linalg.eigh(hubbard.Hamiltonian.toarray())
 
     fig, ax = plt.subplots(1,1)

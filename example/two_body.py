@@ -206,6 +206,7 @@ if __name__ == '__main__':
     hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the model
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt) # Instantiate the partition function
+    print(Z)
 
     totalMomentum = lattice.momenta[args.momentum]
     C = two_body_correlator(Z, args.Spin, args.Isospin, totalMomentum) # Calculate the two-body correlation matrix

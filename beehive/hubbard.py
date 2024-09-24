@@ -21,6 +21,9 @@ class Hubbard:
 
         self.Hilbert_space_dimension = 4**self.Lattice.sites
 
+    def __str__(self):
+        return f'Hubbard({self.Lattice}, U={self.U})'
+
     def _destroy(self, res):
         """Calculate the destruction operator of a particle/hole.
             This is done by separating the Fock space into the tensor products.

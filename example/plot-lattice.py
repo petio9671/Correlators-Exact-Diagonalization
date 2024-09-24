@@ -16,8 +16,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     lattice = beehive.Honeycomb(*args.L)
+    print(lattice)
 
-    print(lattice.momenta)
+    if args.bz:
+        print(lattice.momenta)
 
     fig, ax = plt.subplots(1,1)
     
