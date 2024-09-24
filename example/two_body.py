@@ -180,8 +180,9 @@ if __name__ == '__main__':
     hubbard = beehive.Hubbard(lattice, args.U)
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt)
+    print(Z)
 
-    C = two_body_correlator(Z, args.Spin, args.Isospin, args.momentum)
+    C = two_body_correlator(Z, args.Spin, args.Isospin, lattice.momenta[args.momentum])
 
     for i, j in product(range(C.shape[0]), range(C.shape[1])):
         fig, ax = Z.plot_correlator(C[i,j])

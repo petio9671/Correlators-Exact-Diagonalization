@@ -19,7 +19,8 @@ class PartitionFunction:
         self.delta = self.beta / self.nt
         self.taus = np.arange(nt) * self.delta if nt < float('inf') else beta / _continuum * np.arange(_continuum)
 
-        
+    def __str__(self):
+        return f'PartitionFunction({self.H}, beta={self.beta}, nt={self.nt})'
 
     @cached_property
     def value(self):

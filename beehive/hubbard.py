@@ -13,6 +13,9 @@ class Hubbard:
 
         self.Hilbert_space_dimension = 4**self.Lattice.sites
 
+    def __str__(self):
+        return f'Hubbard({self.Lattice}, U={self.U})'
+
     def _destroy(self, res):
         sigma = sparse_array(np.array([[1,0],[0,-1]], dtype=np.float64))
         sigma4 = sc.sparse.kron(sigma,sigma)

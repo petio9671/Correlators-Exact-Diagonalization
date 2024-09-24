@@ -42,6 +42,7 @@ if __name__ == '__main__':
     hubbard = beehive.Hubbard(lattice, args.U)
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt)
+    print(Z)
 
     momentum = lattice.momenta[args.momentum]
     C = one_body_correlator(Z, args.species, momentum)

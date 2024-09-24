@@ -49,6 +49,7 @@ if __name__ == '__main__':
     hubbard = beehive.Hubbard(lattice, args.U)
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt)
+    print(Z)
 
     with PDF(args.pdf) as pdf:
         for momentum in lattice.momenta:
