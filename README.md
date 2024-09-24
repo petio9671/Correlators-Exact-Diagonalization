@@ -1,4 +1,29 @@
-# Correlators-Exact-Diagonalization
+# Correlators Exact Diagonalization
+
+This package called `beehive` implements the exact solution of the Hubbard model on a honeycomb lattice. 
+It currently handles only the Hubbard model and a honeycomb lattice but it can and will be expanded to other systems and models in the future.
+
+
+## Installation
+
+The `main` branch holds the newest major version of `beehive`.
+Subreleases, if they appear may contain bug fixes and can be found at 
+`release/MajorVersionID.n` where n counts upwards from 0.
+
+### Quick Build
+
+The quick build.
+
+1. Obtain a copy of the package
+```
+https://github.com/petio9671/Correlators-Exact-Diagonalization.git && cd Correlators-Exact-Diagonalization
+```
+2. Install using pip
+```
+pip install --user -e .
+```
+
+## License
 
 ```
 Correlators Exact Diagonalization
