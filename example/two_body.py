@@ -140,7 +140,7 @@ def two_body_correlator(Z, Spin, Isospin, total_momentum):
 
 if __name__ == '__main__':
 
-    parser = beehive.parse.ArgumentParser('L', 'U', 'beta', 'nt', 'momentum', )
+    parser = beehive.parse.ArgumentParser(('L', 'U', 'beta', 'nt', 'momentum', ))
     parser.add_argument('--Spin', type=int, nargs=2, default=(+1, +1))
     parser.add_argument('--Isospin', type=int, nargs=2, default=(+1, +1))
     args = parser.parse_args()

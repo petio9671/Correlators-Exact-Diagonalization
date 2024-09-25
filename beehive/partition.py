@@ -56,6 +56,10 @@ class PartitionFunction:
             
         """
 
+        if self.nt == float('inf'):
+            H = self.H.Hamiltonian
+            return [sc.sparse.linalg.expm(-tau*H) for tau in self.taus]
+
         transfer_matrix = sc.sparse.linalg.expm(-self.delta*self.H.K()) @ sc.sparse.linalg.expm(-self.delta*self.H.V())
         transfers = [sc.sparse.eye(self.H.Hilbert_space_dimension, format=format)]
         for t in range(1,self.nt+1):
@@ -82,17 +86,9 @@ class PartitionFunction:
         
         """
 
-        H = self.H.Hamiltonian
-
-        if self.nt == float('inf'):
-            return np.array([
-                ( sc.sparse.linalg.expm(-(self.beta-tau)*H) @ sink @ sc.sparse.linalg.expm(-tau*H) @ source ).trace()
-                for tau in self.taus
-            ]) / self.value
-
-        c = np.zeros(self.nt, dtype=complex)
-        for t in range(0, self.nt):
-            c[t] = (self._transfers[self.nt-t] @ sink @ self._transfers[t] @ source).trace()
+        c = np.zeros(len(self.taus), dtype=complex)
+        for t, (forward, backward) in enumerate(zip(self._transfers[:-1], self._transfers[::-1])):
+            c[t] = (backward @ sink @ forward @ source).trace()
 
         return c / self.value
 
