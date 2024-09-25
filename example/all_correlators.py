@@ -14,16 +14,9 @@ from pdf import PDF
 
 if __name__ == '__main__':
 
-    parser = beehive.parse.ArgumentParser('L', 'U', 'beta', 'nt')
-    parser.add_argument('--versions', default=False, action='store_true')
+    parser = beehive.cli.ArgumentParser(('L', 'U', 'beta', 'nt'))
     parser.add_argument('pdf', type=str, default='')
-
     args = parser.parse_args()
-
-    if args.versions:
-        print('numpy', np.__version__)
-        print('scipy', sc.__version__)
-        exit(0)
 
     lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
     hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the Hubbard model
