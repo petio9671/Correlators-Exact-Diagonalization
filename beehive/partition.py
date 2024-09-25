@@ -37,7 +37,7 @@ class PartitionFunction:
         if self.nt == float('inf'):
             return ( sc.sparse.linalg.expm(-self.beta*self.H.Hamiltonian) ).trace()
 
-        transfer_matrix = sc.sparse.linalg.expm(-self.delta*self.H.K().toarray()) @ sc.sparse.linalg.expm(-self.delta*self.H.V().toarray())
+        transfer_matrix = sc.sparse.linalg.expm(-self.delta*self.H.K()) @ sc.sparse.linalg.expm(-self.delta*self.H.V())
         return sc.sparse.linalg.matrix_power(transfer_matrix, self.nt).trace()
 
     @cached_property
