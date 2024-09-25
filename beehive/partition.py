@@ -7,6 +7,10 @@ from functools import cached_property
 
 import matplotlib.pyplot as plt
 
+import logging
+logger = logging.getLogger(__name__)
+from beehive.monitoring import Timed
+
 from beehive import format
 
 class PartitionFunction:
@@ -32,8 +36,9 @@ class PartitionFunction:
         return f'PartitionFunction({self.H}, beta={self.beta}, nt={self.nt})'
 
     @cached_property
+    @Timed(logger.debug)
     def value(self):
-        """sparce_array: value of the partiton function"""
+        """sparse_array: value of the partiton function"""
         if self.nt == float('inf'):
             return ( sc.sparse.linalg.expm(-self.beta*self.H.Hamiltonian) ).trace()
 
@@ -41,6 +46,7 @@ class PartitionFunction:
         return sc.sparse.linalg.matrix_power(transfer_matrix, self.nt).trace()
 
     @cached_property
+    @Timed(logger.debug)
     def _transfers(self):
         """:list of sparse_array: Transfer matrix which is defined by
 
@@ -56,6 +62,7 @@ class PartitionFunction:
             transfers.append(transfers[-1] @ transfer_matrix)
         return transfers
 
+    @Timed(logger.debug)
     def correlator(self, sink, source):
         """Calculate descreet or continuum correlation function
             If it is in the continuum it calculates
@@ -89,6 +96,7 @@ class PartitionFunction:
 
         return c / self.value
 
+    @Timed(logger.debug)
     def correlator_matrix(self, sink, source):
         """Construct the band correlator matrix
 
