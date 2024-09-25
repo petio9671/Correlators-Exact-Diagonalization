@@ -27,6 +27,7 @@ class PartitionFunction:
 
         self.delta = self.beta / self.nt
         self.taus = np.arange(nt) * self.delta if nt < float('inf') else beta / _continuum * np.arange(_continuum)
+        self._timeslices = len(self.taus) # This is an integer even if nt = inf.
 
     def __str__(self):
         return f'PartitionFunction({self.H}, beta={self.beta}, nt={self.nt})'
@@ -51,7 +52,7 @@ class PartitionFunction:
 
         transfer_matrix = sc.sparse.linalg.expm(-self.delta*self.H.K()) @ sc.sparse.linalg.expm(-self.delta*self.H.V())
         transfers = [sc.sparse.eye(self.H.Hilbert_space_dimension, format=format)]
-        for t in range(1,self.nt+1):
+        for t in range(1,self._timeslices+1):
             transfers.append(transfers[-1] @ transfer_matrix)
         return transfers
 
@@ -82,9 +83,9 @@ class PartitionFunction:
                 for tau in self.taus
             ]) / self.value
 
-        c = np.zeros(self.nt, dtype=complex)
-        for t in range(0, self.nt):
-            c[t] = (self._transfers[self.nt-t] @ sink @ self._transfers[t] @ source).trace()
+        c = np.zeros(self._timeslices, dtype=complex)
+        for t in range(0, self._timeslices):
+            c[t] = (self._transfers[self._timeslices-t] @ sink @ self._transfers[t] @ source).trace()
 
         return c / self.value
 
