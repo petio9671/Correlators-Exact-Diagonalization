@@ -10,26 +10,7 @@ logger = logging.getLogger(__name__)
 
 from one_body import one_body_correlator
 from two_body import two_body_correlator
-
-class PDF:
-    # A context manager which helps us avoid having too many figures open at once.
-    # see eg. history.py for use.
-    def __init__(self, filename):
-        self.filename = filename
-        self.pages = None
-
-    def save(self, fig):
-        fig.savefig(self.pages, format='pdf')
-
-    def __enter__(self):
-        from matplotlib.backends.backend_pdf import PdfPages
-        self.pages = PdfPages(self.filename)
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        if self.pages:
-            self.pages.close()
-            self.pages = None
+from pdf import PDF
 
 if __name__ == '__main__':
 
