@@ -9,4 +9,4 @@ sparse_array = scipy.sparse.csr_array
 from beehive.honeycomb import Honeycomb
 from beehive.hubbard import Hubbard
 from beehive.partition import PartitionFunction
-import beehive.parse
+import beehive.cli
