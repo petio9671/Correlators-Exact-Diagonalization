@@ -8,7 +8,51 @@ import scipy as sc
 import logging
 logger = logging.getLogger(__name__)
 
-from one_body import one_body_correlator
+two_body_amplitudes = {
+    # For two momenta (or unit cells) k, q we can construct 16 different two-body operators,
+    #
+    #   {p(k), p†(k), h(k), h†(k)} {p(q), p†(q), h(q), h†(q)}
+    #
+    # 16 = (4 choices for the left operator) * (4 choices for the right operator).
+    #
+    # Except for the S=1 Sz=±1 I=1 Iz=±1 these operators don't have definite isospin.
+    # Operators with good isospin can be written
+    #
+    #   O = ∑_{l,r} c[l,r]  {p, p†, h, h†}[l] {p, p†, h, h†}[r]
+    #
+    # with l, r from 0 to 3 indicating left and right operators and
+    # the amplitudes c can be thought of like Clebsch-Gordan coefficients
+    # that differ for every channel given by (S, Sz) and (I, Iz).
+    # We encode these amplitudes in a 4x4 matrix (l and r indices) for each channel.
+    #
+    # The dictionary's keys are
+    #
+    #   ((S, Sz), (I, Iz))
+    #
+    # and the values are 4x4 matrices.
+
+    # S=1 I=1 3x3 matrix
+    ((1, +1), (1, +1)): np.array([[0, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex),
+    ((1,  0), (1, +1)): np.array([[0, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 0]], dtype=complex) / np.sqrt(2),
+    ((1, -1), (1, +1)): np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]], dtype=complex),
+    ((1, +1), (1,  0)): np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0], [0, 1, 0, 0]], dtype=complex) / np.sqrt(2),
+    ((1,  0), (1,  0)): np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0,-1], [0, 0,-1, 0]], dtype=complex) / 2,
+    ((1, -1), (1,  0)): np.array([[0, 0, 1, 0], [0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]], dtype=complex) / np.sqrt(2),
+    ((1, +1), (1, -1)): np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]], dtype=complex),
+    ((1,  0), (1, -1)): np.array([[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [1, 0, 0, 0]], dtype=complex) / np.sqrt(2),
+    ((1, -1), (1, -1)): np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex),
+    # S=1 I=0 3x1
+    ((1, +1), (0, 0)): np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0], [0,-1, 0, 0]], dtype=complex) / np.sqrt(2),
+    ((1,  0), (0, 0)): np.array([[0, 1, 0, 0], [-1, 0, 0, 0], [0, 0, 0,+1], [0, 0,-1, 0]], dtype=complex) / 2,
+    ((1, -1), (0, 0)): np.array([[0, 0, 1, 0], [0, 0, 0, 0], [-1, 0, 0, 0], [0, 0, 0, 0]], dtype=complex) / np.sqrt(2),
+    # S=0 I=1 1x3
+    ((0, 0), (1, +1)): np.array([[0, 0, 0, 0], [0, 0, 1, 0], [0,-1, 0, 0], [0, 0, 0, 0]], dtype=complex) / np.sqrt(2),
+    ((0, 0), (1,  0)): np.array([[0,-1, 0, 0], [1, 0, 0, 0], [0, 0, 0,+1], [0, 0,-1, 0]], dtype=complex) / 2,
+    ((0, 0), (1, -1)): np.array([[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [-1, 0, 0, 0]], dtype=complex) / np.sqrt(2),
+    # S=0 I=0 1x1
+    ((0, 0), (0,  0)): np.array([[0,+1, 0, 0], [+1, 0, 0, 0], [0, 0, 0,+1], [0, 0,+1, 0]], dtype=complex) / 2,
+    }
+
 
 def two_body_operator(Z, Spin, Isospin, momenta):
     """Calculate a two-body operator in the momentum space for a particular spin-isospin channel
@@ -28,143 +72,42 @@ def two_body_operator(Z, Spin, Isospin, momenta):
     # Isospin (1, -1)
     # momenta.shape = (2,2)
 
+    try:
+        a = two_body_amplitudes[(Spin, Isospin)]
+    except:
+        raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
+
     # fourier amplitudes
     c0_plus  = Z.H.Lattice.fourier(momenta[0], +1)
     c0_minus = Z.H.Lattice.fourier(momenta[0], -1)
     c1_plus  = Z.H.Lattice.fourier(momenta[1], +1)
     c1_minus = Z.H.Lattice.fourier(momenta[1], -1)
 
-    if Spin[0] == 1 and Isospin[0] == 1 and Spin[1] in (-1, +1) and Isospin[1] in (-1, +1):
-        if Spin[1] == -1 and Isospin[1] == -1:
-            operator0 = Z.H.destroy_particle
-            operator1 = Z.H.destroy_particle
-        elif Spin[1] == +1 and Isospin[1] == +1:
-            operator0 = Z.H.create_particle
-            operator1 = Z.H.create_particle
-        elif Spin[1] == -1 and Isospin[1] == +1:
-            operator0 = Z.H.destroy_hole
-            operator1 = Z.H.destroy_hole
-        elif Spin[1] == +1 and Isospin[1] == -1:
-            operator0 = Z.H.create_hole
-            operator1 = Z.H.create_hole
-        else:
-            raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
-        
-        o0_plus  = Z.H.operator(c0_plus,  operator0)
-        o0_minus = Z.H.operator(c0_minus, operator0)
-        o1_plus  = Z.H.operator(c1_plus,  operator1)
-        o1_minus = Z.H.operator(c1_minus, operator1)
-        
-        return np.stack((
-            o0_plus @ o1_plus,
-            o0_plus @ o1_minus,
-            o0_minus @ o1_plus,
-            o0_minus @ o1_minus
-            ))
-        
-    if (Spin[0] == 1) and (Isospin[0] == 1) and ((Spin[1] == 0) ^ (Isospin[1] == 0)):
-        if Spin[1] == 0 and Isospin[1] == +1:
-            operator0 = Z.H.create_particle
-            operator1 = Z.H.destroy_hole
-        elif Spin[1] == 0 and Isospin[1] == -1:
-            operator0 = Z.H.destroy_particle
-            operator1 = Z.H.create_hole
-        elif Spin[1] == +1 and Isospin[1] == 0:
-            operator0 = Z.H.create_particle
-            operator1 = Z.H.create_hole
-        elif Spin[1] == -1 and Isospin[1] == 0:
-            operator0 = Z.H.destroy_particle
-            operator1 = Z.H.destroy_hole
-        else:
-            raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
+    def op(c, idx):
+        if idx== 0:
+            return Z.H.operator(c, Z.H.destroy_particle)
+        if idx== 1:
+            return Z.H.operator(c, Z.H.create_particle)
+        if idx== 2:
+            return Z.H.operator(c, Z.H.destroy_hole)
+        if idx== 3:
+            return Z.H.operator(c, Z.H.create_hole)
 
-        o0_plus  = Z.H.operator(c0_plus,  operator0)
-        o0_minus = Z.H.operator(c0_minus, operator0)
-        o1_plus  = Z.H.operator(c1_plus,  operator1)
-        o1_minus = Z.H.operator(c1_minus, operator1)
+    stack = list(beehive.sparse_array((Z.H.Hilbert_space_dimension, Z.H.Hilbert_space_dimension)) for i in range(4))
+    for (l, r) in product(range(4), range(4)):
+        if a[l, r] == 0:
+            #print(f'(S, Sz)={Spin} (I, Iz)={Isospin} element [{l},{r}] vanishes.')
+            continue
+        l_plus = op(c0_plus, l)
+        l_minus= op(c0_minus, l)
+        r_plus = op(c1_plus, r)
+        r_minus= op(c1_minus, r)
+        stack[0] += a[l,r] * l_plus @ r_plus
+        stack[1] += a[l,r] * l_plus @ r_minus
+        stack[2] += a[l,r] * l_minus @ r_plus
+        stack[3] += a[l,r] * l_minus @ r_minus
 
-        return np.stack((
-            (o0_plus @ o1_plus + o1_plus @ o0_plus) / np.sqrt(2),
-            (o0_plus @ o1_minus + o1_plus @ o0_minus) / np.sqrt(2),
-            (o0_minus @ o1_plus + o1_minus @ o0_plus) / np.sqrt(2),
-            (o0_minus @ o1_minus + o1_minus @ o0_minus) / np.sqrt(2)
-            ))
-    
-    if Spin[1] == 0 and Isospin[1] == 0:
-        operator0 = Z.H.destroy_particle
-        operator1 = Z.H.create_particle
-        operator2 = Z.H.destroy_hole
-        operator3 = Z.H.create_hole
-
-        o0_plus  = Z.H.operator(c0_plus,  operator0)
-        o0_minus = Z.H.operator(c0_minus, operator0)
-        o1_plus  = Z.H.operator(c1_plus,  operator1)
-        o1_minus = Z.H.operator(c1_minus, operator1)
-        o2_plus  = Z.H.operator(c0_plus,  operator2)
-        o2_minus = Z.H.operator(c0_minus, operator2)
-        o3_plus  = Z.H.operator(c1_plus,  operator3)
-        o3_minus = Z.H.operator(c1_minus, operator3)
-
-        if Spin[0] == 0 and Isospin[0] == 0:
-            return np.stack((
-                (o0_plus @ o1_plus + o1_plus @ o0_plus + o2_plus @ o3_plus + o3_plus @ o2_plus) / 2,
-                (o0_plus @ o1_minus + o1_plus @ o0_minus + o2_plus @ o3_minus + o3_plus @ o2_minus) / 2,
-                (o0_minus @ o1_plus + o1_minus @ o0_plus + o2_minus @ o3_plus + o3_minus @ o2_plus) / 2,
-                (o0_minus @ o1_minus + o1_minus @ o0_minus + o2_minus @ o3_minus + o3_minus @ o2_minus) / 2
-                ))
-        elif Spin[0] == 0 and Isospin[0] == 1:
-            return np.stack((
-                (- o0_plus @ o1_plus + o1_plus @ o0_plus + o2_plus @ o3_plus - o3_plus @ o2_plus) / 2,
-                (- o0_plus @ o1_minus + o1_plus @ o0_minus + o2_plus @ o3_minus - o3_plus @ o2_minus) / 2,
-                (- o0_minus @ o1_plus + o1_minus @ o0_plus + o2_minus @ o3_plus - o3_minus @ o2_plus) / 2,
-                (- o0_minus @ o1_minus + o1_minus @ o0_minus + o2_minus @ o3_minus - o3_minus @ o2_minus) / 2
-                ))
-        elif Spin[0] == 1 and Isospin[0] == 0:
-            return np.stack((
-                (o0_plus @ o1_plus - o1_plus @ o0_plus + o2_plus @ o3_plus - o3_plus @ o2_plus) / 2,
-                (o0_plus @ o1_minus - o1_plus @ o0_minus + o2_plus @ o3_minus - o3_plus @ o2_minus) / 2,
-                (o0_minus @ o1_plus - o1_minus @ o0_plus + o2_minus @ o3_plus - o3_minus @ o2_plus) / 2,
-                (o0_minus @ o1_minus - o1_minus @ o0_minus + o2_minus @ o3_minus - o3_minus @ o2_minus) / 2
-                ))
-        elif Spin[0] == 1 and Isospin[0] == 1:
-            return np.stack((
-                (o0_plus @ o1_plus + o1_plus @ o0_plus - o2_plus @ o3_plus - o3_plus @ o2_plus) / 2,
-                (o0_plus @ o1_minus + o1_plus @ o0_minus - o2_plus @ o3_minus - o3_plus @ o2_minus) / 2,
-                (o0_minus @ o1_plus + o1_minus @ o0_plus - o2_minus @ o3_plus - o3_minus @ o2_plus) / 2,
-                (o0_minus @ o1_minus + o1_minus @ o0_minus - o2_minus @ o3_minus - o3_minus @ o2_minus) / 2
-                ))
-        else:
-            raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
-
-    if (Spin[0] == 0 and Isospin[0] == 1) or (Spin[0] == 1 and Isospin[0] == 0):
-        if Spin[1] == 0 and Isospin[1] == +1:
-            operator0 = Z.H.create_particle
-            operator1 = Z.H.destroy_hole
-        elif Spin[1] == 0 and Isospin[1] == -1:
-            operator0 = Z.H.destroy_particle
-            operator1 = Z.H.create_hole
-        elif Spin[1] == +1 and Isospin[1] == 0:
-            operator0 = Z.H.create_particle
-            operator1 = Z.H.create_hole
-        elif Spin[1] == -1 and Isospin[1] == 0:
-            operator0 = Z.H.destroy_particle
-            operator1 = Z.H.destroy_hole
-        else:
-            raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
-
-        o0_plus  = Z.H.operator(c0_plus,  operator0)
-        o0_minus = Z.H.operator(c0_minus, operator0)
-        o1_plus  = Z.H.operator(c1_plus,  operator1)
-        o1_minus = Z.H.operator(c1_minus, operator1)
-
-        return np.stack((
-            (o0_plus @ o1_plus - o1_plus @ o0_plus) / np.sqrt(2),
-            (o0_plus @ o1_minus - o1_plus @ o0_minus) / np.sqrt(2),
-            (o0_minus @ o1_plus - o1_minus @ o0_plus) / np.sqrt(2),
-            (o0_minus @ o1_minus - o1_minus @ o0_minus) / np.sqrt(2)
-            ))
-
-    raise ValueError(f'(S, Sz) = {Spin} and (I, Iz) = {Isospin} not allowed')
+    return stack
 
 def two_body_correlator(Z, Spin, Isospin, total_momentum):
     """Calculate a two-body correlator with a total momentum for a particular spin-isospin channel
@@ -201,6 +144,10 @@ if __name__ == '__main__':
     parser.add_argument('--Spin', type=int, nargs=2, default=(+1, +1))
     parser.add_argument('--Isospin', type=int, nargs=2, default=(+1, +1))
     args = parser.parse_args()
+
+    # Tuples are preferred.
+    args.Spin = (args.Spin[0], args.Spin[1])
+    args.Isospin = (args.Isospin[0], args.Isospin[1])
 
     lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
     hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the model
