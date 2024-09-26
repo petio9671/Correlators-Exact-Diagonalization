@@ -98,8 +98,8 @@ class PartitionFunction:
         """Construct the band correlator matrix
 
         Args:
-            sink (sparse_array): Operator at the sink
-            source (sparse_array): Operator at the source
+            sink (ndarray of sparse_array): Operators at the sink
+            source (ndarray of sparse_array): Operators at the source
 
         Returns:
             ndarray: Correlator matrix

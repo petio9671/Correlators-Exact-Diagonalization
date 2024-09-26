@@ -19,7 +19,7 @@ def one_body_operators(Z, momentum, operator):
         operator (list of sparse_array): Operator in position space
 
     Returns:
-        sparse_array: One-body operator in momentum space with 2 bands
+        ndarray of sparse_array: One-body operator in momentum space with 2 bands
         
     """
 
@@ -44,13 +44,14 @@ def one_body_correlator(Z, hubbard_species, momentum):
         
 
     Returns:
-        sparse_array: Correlator matrix
+        ndarray: Correlator matrix
         
     """
 
     logger.debug(f'{hubbard_species} with {momentum=}')
     flavor = Z.H.destroy_particle if (hubbard_species == 'particle') else Z.H.destroy_hole
     operators = one_body_operators(Z, momentum, flavor)
+
     return Z.correlator_matrix(operators, operators)
 
 if __name__ == '__main__':
