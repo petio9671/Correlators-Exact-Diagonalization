@@ -57,6 +57,7 @@ def one_body_correlator(Z, hubbard_species, momentum):
 if __name__ == '__main__':
 
     parser = beehive.cli.ArgumentParser(('L', 'U', 'beta', 'nt', 'momentum', 'species'))
+    parser.add_argument('--pdf', type=str, default='')
     args = parser.parse_args()
 
     lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
@@ -77,4 +78,7 @@ if __name__ == '__main__':
 
     fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} {args.species} p={momentum}')
 
-    plt.show()
+    if args.pdf:
+        fig.savefig(args.pdf)
+    else:
+        plt.show()

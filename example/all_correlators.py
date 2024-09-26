@@ -37,7 +37,6 @@ if __name__ == '__main__':
                 fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} {species} p={momentum}')
                 fig.tight_layout()
                 pdf.save(fig)
-                plt.close(fig)
 
         for Spin, Isospin, TotalMomentum in product(
                 ((0, 0), (1, +1), (1, 0), (1, -1)),
@@ -51,4 +50,3 @@ if __name__ == '__main__':
                 fig.tight_layout()
 
                 pdf.save(fig)
-                plt.close(fig)

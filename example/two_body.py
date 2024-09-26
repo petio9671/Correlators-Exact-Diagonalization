@@ -9,6 +9,8 @@ import logging
 logger = logging.getLogger(__name__)
 from beehive.monitoring import Timer, Timed
 
+from pdf import PDF
+
 two_body_amplitudes = {
     # For two momenta (or unit cells) k, q we can construct 16 different two-body operators,
     #
@@ -157,6 +159,7 @@ if __name__ == '__main__':
     parser = beehive.cli.ArgumentParser(('L', 'U', 'beta', 'nt', 'momentum', ))
     parser.add_argument('--Spin', type=int, nargs=2, default=(+1, +1))
     parser.add_argument('--Isospin', type=int, nargs=2, default=(+1, +1))
+    parser.add_argument('--pdf', type=str, default='')
     args = parser.parse_args()
 
     # Tuples are preferred.
@@ -173,8 +176,10 @@ if __name__ == '__main__':
     C = two_body_correlator(Z, args.Spin, args.Isospin, totalMomentum) # Calculate the two-body correlation matrix
 
     # Plot the correlator matrix
-    for i, j in product(range(C.shape[0]), range(C.shape[1])):
-        fig, ax = Z.plot_correlator(C[i,j])
-        fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} (I={args.Isospin[0]} S={args.Spin[0]} Iz={args.Isospin[1]} Sz={args.Spin[1]}) P={totalMomentum} p={i}, {j}')
-
-    plt.show()
+    with PDF(args.pdf) as pdf:
+        for i, j in product(range(C.shape[0]), range(C.shape[1])):
+            fig, ax = Z.plot_correlator(C[i,j])
+            fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} (I={args.Isospin[0]} S={args.Spin[0]} Iz={args.Isospin[1]} Sz={args.Spin[1]}) P={totalMomentum} p={i}, {j}')
+            pdf.save(fig)
+    if not args.pdf:
+        plt.show()

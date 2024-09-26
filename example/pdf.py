@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 class PDF:
@@ -15,10 +16,13 @@ class PDF:
         self.pages = None
 
     def save(self, fig):
-        fig.savefig(self.pages, format='pdf')
+        if self.pages:
+            fig.savefig(self.pages, format='pdf')
+            plt.close(fig)
 
     def __enter__(self):
-        self.pages = PdfPages(self.filename)
+        if self.filename:
+            self.pages = PdfPages(self.filename)
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
