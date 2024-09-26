@@ -12,6 +12,10 @@ from one_body import one_body_correlator
 from two_body import two_body_correlator
 from pdf import PDF
 
+def mega(C):
+    reordered = C.transpose((0, 2, 1, 3, 4))
+    return reordered.reshape((reordered.shape[0]*reordered.shape[1], reordered.shape[2]*reordered.shape[3], reordered.shape[4]))
+
 if __name__ == '__main__':
 
     parser = beehive.cli.ArgumentParser(('L', 'U', 'beta'))
@@ -64,16 +68,16 @@ if __name__ == '__main__':
                 lattice.momenta,
                 ):
             # For each channel, compute the correlators
-            C = tuple(two_body_correlator(z, Spin, Isospin, TotalMomentum) for z in Z)
-            # and make a figure for every shell/shell combination.
-            for i, j in product(range(C[0].shape[0]), range(C[0].shape[1])):
-                fig, ax = plt.subplots(4, 4, figsize=(12, 8), sharex='col')
+            C = tuple(mega(two_body_correlator(z, Spin, Isospin, TotalMomentum)) for z in Z)
+            # and make a megafigure.
+            sinks, sources = C[0].shape[:2]
+            fig, ax = plt.subplots(sources, sinks, figsize=(3*sinks, 2*sources), sharex='col')
+            for i, j in product(range(sinks), range(sources)):
                 for z, c in zip(Z, C):
-                    for row, col in product(range(4), range(4)):
-                        ax[row, col].plot(z.taus, c[i, j, row, col].real, label=f'real nt={z.nt}', **style(z.nt))
-                        ax[row, col].plot(z.taus, c[i, j, row, col].imag, label=f'imag nt={z.nt}', **style(z.nt))
+                    ax[i,j].plot(z.taus, c[i, j].real, label=f'real nt={z.nt}', **style(z.nt))
+                    ax[i,j].plot(z.taus, c[i, j].imag, label=f'imag nt={z.nt}', **style(z.nt))
 
-                ax[0,-1].legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-                fig.suptitle(f'{lattice} U={hubbard.U} β={args.beta} (S={Spin[0]} Sz={Spin[1]}) (I={Isospin[0]} Iz={Isospin[1]}) P={TotalMomentum} p={i}, {j}')
-                fig.tight_layout()
-                pdf.save(fig)
+            ax[0,-1].legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+            fig.suptitle(f'{lattice} U={hubbard.U} β={args.beta} (S={Spin[0]} Sz={Spin[1]}) (I={Isospin[0]} Iz={Isospin[1]}) P={TotalMomentum}')
+            fig.tight_layout()
+            pdf.save(fig)
