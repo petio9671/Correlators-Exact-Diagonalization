@@ -40,8 +40,6 @@ class PartitionFunction:
     @Timed(logger.debug)
     def value(self):
         """sparse_array: value of the partiton function"""
-        if self.nt == float('inf'):
-            return ( sc.sparse.linalg.expm(-self.beta*self.H.Hamiltonian) ).trace()
 
         return self._transfers[-1].trace()
 
@@ -58,7 +56,8 @@ class PartitionFunction:
 
         if self.nt == float('inf'):
             H = self.H.Hamiltonian
-            return [sc.sparse.linalg.expm(-tau*H) for tau in self.taus]
+            # We want to go one more than taus, because we want to be able to use these forward and backward below.
+            return [sc.sparse.linalg.expm(-tau*H) for tau in self.taus[1] * np.arange(self._timeslices+1)]
 
         transfer_matrix = sc.sparse.linalg.expm(-self.delta*self.H.K()) @ sc.sparse.linalg.expm(-self.delta*self.H.V())
         transfers = [sc.sparse.eye(self.H.Hilbert_space_dimension, format=format)]
@@ -86,16 +85,9 @@ class PartitionFunction:
         
         """
 
-        if self.nt == float('inf'):
-            H = self.H.Hamiltonian
-            return np.array([
-                ( sc.sparse.linalg.expm(-(self.beta-tau)*H) @ sink @ sc.sparse.linalg.expm(-tau*H) @ source ).trace()
-                for tau in self.taus
-            ]) / self.value
-
         c = np.zeros(self._timeslices, dtype=complex)
-        for t in range(0, self._timeslices):
-            c[t] = (self._transfers[self._timeslices-t] @ sink @ self._transfers[t] @ source).trace()
+        for t, (forward, backward) in enumerate(zip(self._transfers[:-1], reversed(self._transfers))):
+            c[t] = (backward @ sink @ forward @ source).trace()
 
         return c / self.value
 
