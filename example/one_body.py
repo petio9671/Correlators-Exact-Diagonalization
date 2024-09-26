@@ -7,7 +7,28 @@ import scipy as sc
 
 import logging
 logger = logging.getLogger(__name__)
+from beehive.monitoring import Timed
 
+_one_body_operator_cache = dict()
+def indexed_operator(H, amplitudes, idx):
+    # With a fixed setup H and given set of amplitudes we can
+    # still construct four independent operators, p, p†, h and h†.
+    try:
+        return _one_body_operator_cache[(H, tuple(amplitudes.tolist()), idx)]
+    except:
+        pass
+    if idx== 0:
+        o = H.operator(amplitudes, H.destroy_particle)
+    if idx== 1:
+        o = H.operator(amplitudes, H.create_particle)
+    if idx== 2:
+        o = H.operator(amplitudes, H.destroy_hole)
+    if idx== 3:
+        o = H.operator(amplitudes, H.create_hole)
+    _one_body_operator_cache[(H, tuple(amplitudes.tolist()), idx)] = o
+    return o
+
+@Timed(logging.info)
 def one_body_operators(Z, momentum, operator):
     """Calculate a one-body operator in the momentum space and 2 bands
 
@@ -17,7 +38,7 @@ def one_body_operators(Z, momentum, operator):
         operator (list of sparse_array): Operator in position space
 
     Returns:
-        sparse_array: One-body operator in momentum space with 2 bands
+        list of sparse_array: One-body operator in momentum space with 2 bands
         
     """
 
@@ -29,8 +50,9 @@ def one_body_operators(Z, momentum, operator):
     o_plus  = Z.H.operator(c_plus,  operator)
     o_minus = Z.H.operator(c_minus, operator)
 
-    return np.stack((o_plus, o_minus))
+    return list((o_plus, o_minus))
 
+@Timed(logging.info)
 def one_body_correlator(Z, hubbard_species, momentum):
     """Calculate a one-body correlator matrix for given species in the momentum space 
 
@@ -41,31 +63,27 @@ def one_body_correlator(Z, hubbard_species, momentum):
         
 
     Returns:
-        sparse_array: Correlator matrix
+        ndarray: Correlator matrix
         
     """
 
+    logger.debug(f'{hubbard_species} with {momentum=}')
     flavor = Z.H.destroy_particle if (hubbard_species == 'particle') else Z.H.destroy_hole
     operators = one_body_operators(Z, momentum, flavor)
+
     return Z.correlator_matrix(operators, operators)
 
 if __name__ == '__main__':
 
-    parser = beehive.parse.ArgumentParser('L', 'U', 'beta', 'nt', 'momentum', 'species')
-    parser.add_argument('--versions', default=False, action='store_true')
-
+    parser = beehive.cli.ArgumentParser(('L', 'U', 'beta', 'nt', 'momentum', 'species'))
+    parser.add_argument('--pdf', type=str, default='')
     args = parser.parse_args()
-
-    if args.versions:
-        print('numpy', np.__version__)
-        print('scipy', sc.__version__)
-        exit(0)
 
     lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
     hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the Hubbard model
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt) # Instantiate the partition function
-    print(Z)
+    logger.info(Z)
 
     momentum = lattice.momenta[args.momentum] # Get the momentum you want from the momenta array
     C = one_body_correlator(Z, args.species, momentum) # Calculate the one-body correlation function
@@ -79,4 +97,7 @@ if __name__ == '__main__':
 
     fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} {args.species} p={momentum}')
 
-    plt.show()
+    if args.pdf:
+        fig.savefig(args.pdf)
+    else:
+        plt.show()

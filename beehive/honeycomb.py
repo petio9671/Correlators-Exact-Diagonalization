@@ -5,6 +5,9 @@ from functools import cached_property
 
 from beehive import format
 
+import logging
+logger = logging.getLogger(__name__)
+
 from matplotlib.patches import Polygon
 
 class Honeycomb:
