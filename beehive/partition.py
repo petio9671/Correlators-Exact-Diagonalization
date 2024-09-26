@@ -7,6 +7,10 @@ from functools import cached_property
 
 import matplotlib.pyplot as plt
 
+import logging
+logger = logging.getLogger(__name__)
+from beehive.monitoring import Timed
+
 from beehive import format
 
 class PartitionFunction:
@@ -33,14 +37,16 @@ class PartitionFunction:
         return f'PartitionFunction({self.H}, beta={self.beta}, nt={self.nt})'
 
     @cached_property
+    @Timed(logger.debug)
     def value(self):
-        """sparce_array: value of the partiton function"""
+        """sparse_array: value of the partiton function"""
         if self.nt == float('inf'):
             return ( sc.sparse.linalg.expm(-self.beta*self.H.Hamiltonian) ).trace()
 
-        return self._transfers[self.nt].trace()
+        return self._transfers[-1].trace()
 
     @cached_property
+    @Timed(logger.debug)
     def _transfers(self):
         """:list of sparse_array: Transfer matrix which is defined by
 
@@ -50,12 +56,17 @@ class PartitionFunction:
             
         """
 
+        if self.nt == float('inf'):
+            H = self.H.Hamiltonian
+            return [sc.sparse.linalg.expm(-tau*H) for tau in self.taus]
+
         transfer_matrix = sc.sparse.linalg.expm(-self.delta*self.H.K()) @ sc.sparse.linalg.expm(-self.delta*self.H.V())
         transfers = [sc.sparse.eye(self.H.Hilbert_space_dimension, format=format)]
         for t in range(1,self._timeslices+1):
             transfers.append(transfers[-1] @ transfer_matrix)
         return transfers
 
+    @Timed(logger.debug)
     def correlator(self, sink, source):
         """Calculate descreet or continuum correlation function
             If it is in the continuum it calculates
@@ -75,9 +86,8 @@ class PartitionFunction:
         
         """
 
-        H = self.H.Hamiltonian
-
         if self.nt == float('inf'):
+            H = self.H.Hamiltonian
             return np.array([
                 ( sc.sparse.linalg.expm(-(self.beta-tau)*H) @ sink @ sc.sparse.linalg.expm(-tau*H) @ source ).trace()
                 for tau in self.taus
@@ -89,6 +99,7 @@ class PartitionFunction:
 
         return c / self.value
 
+    @Timed(logger.debug)
     def correlator_matrix(self, sink, source):
         """Construct the band correlator matrix
 

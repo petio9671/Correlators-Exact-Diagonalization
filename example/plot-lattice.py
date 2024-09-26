@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     import argparse
 
-    parser = beehive.parse.ArgumentParser('L')
+    parser = beehive.cli.ArgumentParser(('L'))
     parser.add_argument('--bz', default=False, action='store_true', help='Show the Brillouin zone rather than the spatial lattice')
     parser.add_argument('--pdf', default='', type=str)
 
