@@ -74,6 +74,12 @@ def two_body_operator(Z, Spin, Isospin, momenta):
     # Isospin (1, -1)
     # momenta.shape = (2,2)
 
+    logging.debug( 'Constructing operator with')
+    logging.debug(f'    (S, Sz) = {Spin}')
+    logging.debug(f'    (I, Iz) = {Isospin}')
+    logging.debug(f'       p[0] = {momenta[0]}')
+    logging.debug(f'       p[1] = {momenta[1]}')
+
     try:
         a = two_body_amplitudes[(Spin, Isospin)]
     except:
@@ -111,6 +117,7 @@ def two_body_operator(Z, Spin, Isospin, momenta):
 
     return stack
 
+@Timed(logging.info)
 def two_body_correlator(Z, Spin, Isospin, total_momentum):
     """Calculate a two-body correlator with a total momentum for a particular spin-isospin channel
 
@@ -125,6 +132,11 @@ def two_body_correlator(Z, Spin, Isospin, total_momentum):
         
     """
 
+    logging.info( 'Constructing all correlators')
+    logging.info(f'    (S, Sz) = {Spin}')
+    logging.info(f'    (I, Iz) = {Isospin}')
+    logging.info(f'    Total P = {total_momentum}')
+
     lattice = Z.H.Lattice
 
     operators = []
@@ -134,8 +146,8 @@ def two_body_correlator(Z, Spin, Isospin, total_momentum):
         operators.append(two_body_operator(Z, Spin, Isospin, momenta))
 
     C = np.zeros((len(operators), len(operators), 4, 4, len(Z.taus)), dtype=complex)
-    for i, sink in enumerate(operators):
-        for j, source in enumerate(operators):
+    for (i, sink), (j, source) in product(enumerate(operators), enumerate(operators)):
+        with Timer(logging.debug, f'correlator[{i},{j}]'):
             C[i,j] = Z.correlator_matrix(sink, source)
 
     return C

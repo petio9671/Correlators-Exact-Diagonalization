@@ -22,7 +22,7 @@ if __name__ == '__main__':
     hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the Hubbard model
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt) # Instantiate the partition function
-    print(Z)
+    logger.info(Z)
 
 
     # Loop through everything that we can calculate with this system and model and write to a file
