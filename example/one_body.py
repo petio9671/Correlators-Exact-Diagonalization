@@ -9,6 +9,25 @@ import logging
 logger = logging.getLogger(__name__)
 from beehive.monitoring import Timed
 
+_one_body_operator_cache = dict()
+def indexed_operator(H, amplitudes, idx):
+    # With a fixed setup H and given set of amplitudes we can
+    # still construct four independent operators, p, p†, h and h†.
+    try:
+        return _one_body_operator_cache[(H, tuple(amplitudes.tolist()), idx)]
+    except:
+        pass
+    if idx== 0:
+        o = H.operator(amplitudes, H.destroy_particle)
+    if idx== 1:
+        o = H.operator(amplitudes, H.create_particle)
+    if idx== 2:
+        o = H.operator(amplitudes, H.destroy_hole)
+    if idx== 3:
+        o = H.operator(amplitudes, H.create_hole)
+    _one_body_operator_cache[(H, tuple(amplitudes.tolist()), idx)] = o
+    return o
+
 @Timed(logging.info)
 def one_body_operators(Z, momentum, operator):
     """Calculate a one-body operator in the momentum space and 2 bands

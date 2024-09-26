@@ -9,6 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 from beehive.monitoring import Timer, Timed
 
+import one_body
 from pdf import PDF
 
 two_body_amplitudes = {
@@ -93,25 +94,15 @@ def two_body_operator(Z, Spin, Isospin, momenta):
     c1_plus  = Z.H.Lattice.fourier(momenta[1], +1)
     c1_minus = Z.H.Lattice.fourier(momenta[1], -1)
 
-    def op(c, idx):
-        if idx== 0:
-            return Z.H.operator(c, Z.H.destroy_particle)
-        if idx== 1:
-            return Z.H.operator(c, Z.H.create_particle)
-        if idx== 2:
-            return Z.H.operator(c, Z.H.destroy_hole)
-        if idx== 3:
-            return Z.H.operator(c, Z.H.create_hole)
-
     stack = list(beehive.sparse_array((Z.H.Hilbert_space_dimension, Z.H.Hilbert_space_dimension)) for i in range(4))
     for (l, r) in product(range(4), range(4)):
         if a[l, r] == 0:
             #logger.debug(f'(S, Sz)={Spin} (I, Iz)={Isospin} element [{l},{r}] vanishes.')
             continue
-        l_plus  = op(c0_plus, l)
-        l_minus = op(c0_minus, l)
-        r_plus  = op(c1_plus, r)
-        r_minus = op(c1_minus, r)
+        l_plus  = one_body.indexed_operator(Z.H, c0_plus, l)
+        l_minus = one_body.indexed_operator(Z.H, c0_minus, l)
+        r_plus  = one_body.indexed_operator(Z.H, c1_plus, r)
+        r_minus = one_body.indexed_operator(Z.H, c1_minus, r)
         stack[0] += a[l,r] * l_plus @ r_plus
         stack[1] += a[l,r] * l_plus @ r_minus
         stack[2] += a[l,r] * l_minus @ r_plus
