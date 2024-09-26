@@ -42,8 +42,7 @@ class PartitionFunction:
         if self.nt == float('inf'):
             return ( sc.sparse.linalg.expm(-self.beta*self.H.Hamiltonian) ).trace()
 
-        transfer_matrix = sc.sparse.linalg.expm(-self.delta*self.H.K()) @ sc.sparse.linalg.expm(-self.delta*self.H.V())
-        return sc.sparse.linalg.matrix_power(transfer_matrix, self.nt).trace()
+        return self._transfers[-1].trace()
 
     @cached_property
     @Timed(logger.debug)
@@ -82,7 +81,7 @@ class PartitionFunction:
             source (sparse_array): Operator at the source
 
         Returns:
-            sparse_array: Correlation function
+            ndarray: Correlation function
         
         """
 
@@ -101,7 +100,7 @@ class PartitionFunction:
             source (sparse_array): Operator at the source
 
         Returns:
-            sparse_array: Correlator matrix
+            ndarray: Correlator matrix
         
         """
 

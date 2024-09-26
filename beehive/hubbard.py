@@ -107,14 +107,14 @@ class Hubbard:
 
         return self._destroy(res_m)
 
-    @property
+    @cached_property
     @Timed(logger.debug)
     def create_particle(self):
         """:list of sparse_array: Create particle operator in positions space"""
 
         return [o.T.conj() for o in self.destroy_particle]
 
-    @property
+    @cached_property
     @Timed(logger.debug)
     def create_hole(self):
         """:list of sparse_array: Create hole operator in positions space"""
@@ -134,8 +134,8 @@ class Hubbard:
         
         """
 
-        matrix = np.zeros_like(self.Hilbert_space_dimension, dtype=complex)
-
+        matrix = sparse_array((self.Hilbert_space_dimension, self.Hilbert_space_dimension), dtype=complex)
+        
         for amplitude, op in zip(amplitudes, operators):
             matrix += amplitude * op
 
