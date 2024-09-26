@@ -7,7 +7,9 @@ import scipy as sc
 
 import logging
 logger = logging.getLogger(__name__)
+from beehive.monitoring import Timed
 
+@Timed(logging.info)
 def one_body_operators(Z, momentum, operator):
     """Calculate a one-body operator in the momentum space and 2 bands
 
@@ -31,6 +33,7 @@ def one_body_operators(Z, momentum, operator):
 
     return np.stack((o_plus, o_minus))
 
+@Timed(logging.info)
 def one_body_correlator(Z, hubbard_species, momentum):
     """Calculate a one-body correlator matrix for given species in the momentum space 
 
@@ -45,27 +48,21 @@ def one_body_correlator(Z, hubbard_species, momentum):
         
     """
 
+    logger.debug(f'{hubbard_species} with {momentum=}')
     flavor = Z.H.destroy_particle if (hubbard_species == 'particle') else Z.H.destroy_hole
     operators = one_body_operators(Z, momentum, flavor)
     return Z.correlator_matrix(operators, operators)
 
 if __name__ == '__main__':
 
-    parser = beehive.parse.ArgumentParser('L', 'U', 'beta', 'nt', 'momentum', 'species')
-    parser.add_argument('--versions', default=False, action='store_true')
-
+    parser = beehive.cli.ArgumentParser(('L', 'U', 'beta', 'nt', 'momentum', 'species'))
     args = parser.parse_args()
-
-    if args.versions:
-        print('numpy', np.__version__)
-        print('scipy', sc.__version__)
-        exit(0)
 
     lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
     hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the Hubbard model
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt) # Instantiate the partition function
-    print(Z)
+    logger.info(Z)
 
     momentum = lattice.momenta[args.momentum] # Get the momentum you want from the momenta array
     C = one_body_correlator(Z, args.species, momentum) # Calculate the one-body correlation function

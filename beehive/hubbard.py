@@ -5,6 +5,10 @@ from functools import cached_property
 
 from beehive import format, sparse_array
 
+import logging
+logger = logging.getLogger(__name__)
+from beehive.monitoring import Timed
+
 class Hubbard:
     """This class implements the Hubbard model.
 
@@ -24,6 +28,7 @@ class Hubbard:
     def __str__(self):
         return f'Hubbard({self.Lattice}, U={self.U})'
 
+    @Timed(logger.debug)
     def _destroy(self, res):
         """Calculate the destruction operator of a particle/hole.
             This is done by separating the Fock space into the tensor products.
@@ -81,6 +86,7 @@ class Hubbard:
         return destroy
 
     @cached_property
+    @Timed(logger.debug)
     def destroy_particle(self):
         """:list of sparse_array: Destroy particle operator in positions space"""
 
@@ -91,6 +97,7 @@ class Hubbard:
         return self._destroy(res_p)
 
     @cached_property
+    @Timed(logger.debug)
     def destroy_hole(self):
         """:list of sparse_array: Destroy hole operator in positions space"""
 
@@ -101,17 +108,20 @@ class Hubbard:
         return self._destroy(res_m)
 
     @property
+    @Timed(logger.debug)
     def create_particle(self):
         """:list of sparse_array: Create particle operator in positions space"""
 
         return [o.T.conj() for o in self.destroy_particle]
 
     @property
+    @Timed(logger.debug)
     def create_hole(self):
         """:list of sparse_array: Create hole operator in positions space"""
 
         return [o.T.conj() for o in self.destroy_hole]
 
+    @Timed(logger.debug)
     def operator(self, amplitudes, operators):
         """Transform an operator
 
@@ -132,6 +142,7 @@ class Hubbard:
         return matrix
 
     @cached_property
+    @Timed(logger.debug)
     def _KV(self):
         """Calculate the kinetic and interaction terms of the Hubbard Hamiltonian.
             This implementation is similar to how the _destroy method is calculated. For details
@@ -203,6 +214,7 @@ class Hubbard:
         return v
 
     @property
+    @Timed(logger.debug)
     def Hamiltonian(self):
         """:sparse_array: Hubbard Hamiltonian at half-filling"""
 

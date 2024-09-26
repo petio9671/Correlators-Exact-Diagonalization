@@ -7,6 +7,7 @@ import scipy as sc
 
 import logging
 logger = logging.getLogger(__name__)
+from beehive.monitoring import Timer, Timed
 
 two_body_amplitudes = {
     # For two momenta (or unit cells) k, q we can construct 16 different two-body operators,
@@ -54,6 +55,7 @@ two_body_amplitudes = {
     }
 
 
+@Timed(logging.info)
 def two_body_operator(Z, Spin, Isospin, momenta):
     """Calculate a two-body operator in the momentum space for a particular spin-isospin channel
 
@@ -71,6 +73,12 @@ def two_body_operator(Z, Spin, Isospin, momenta):
     # Spin (0, 0)
     # Isospin (1, -1)
     # momenta.shape = (2,2)
+
+    logging.debug( 'Constructing operator with')
+    logging.debug(f'    (S, Sz) = {Spin}')
+    logging.debug(f'    (I, Iz) = {Isospin}')
+    logging.debug(f'       p[0] = {momenta[0]}')
+    logging.debug(f'       p[1] = {momenta[1]}')
 
     try:
         a = two_body_amplitudes[(Spin, Isospin)]
@@ -96,7 +104,7 @@ def two_body_operator(Z, Spin, Isospin, momenta):
     stack = list(beehive.sparse_array((Z.H.Hilbert_space_dimension, Z.H.Hilbert_space_dimension)) for i in range(4))
     for (l, r) in product(range(4), range(4)):
         if a[l, r] == 0:
-            #print(f'(S, Sz)={Spin} (I, Iz)={Isospin} element [{l},{r}] vanishes.')
+            #logger.debug(f'(S, Sz)={Spin} (I, Iz)={Isospin} element [{l},{r}] vanishes.')
             continue
         l_plus = op(c0_plus, l)
         l_minus= op(c0_minus, l)
@@ -109,6 +117,7 @@ def two_body_operator(Z, Spin, Isospin, momenta):
 
     return stack
 
+@Timed(logging.info)
 def two_body_correlator(Z, Spin, Isospin, total_momentum):
     """Calculate a two-body correlator with a total momentum for a particular spin-isospin channel
 
@@ -123,6 +132,11 @@ def two_body_correlator(Z, Spin, Isospin, total_momentum):
         
     """
 
+    logging.info( 'Constructing all correlators')
+    logging.info(f'    (S, Sz) = {Spin}')
+    logging.info(f'    (I, Iz) = {Isospin}')
+    logging.info(f'    Total P = {total_momentum}')
+
     lattice = Z.H.Lattice
 
     operators = []
@@ -132,15 +146,15 @@ def two_body_correlator(Z, Spin, Isospin, total_momentum):
         operators.append(two_body_operator(Z, Spin, Isospin, momenta))
 
     C = np.zeros((len(operators), len(operators), 4, 4, len(Z.taus)), dtype=complex)
-    for i, sink in enumerate(operators):
-        for j, source in enumerate(operators):
+    for (i, sink), (j, source) in product(enumerate(operators), enumerate(operators)):
+        with Timer(logging.debug, f'correlator[{i},{j}]'):
             C[i,j] = Z.correlator_matrix(sink, source)
 
     return C
 
 if __name__ == '__main__':
 
-    parser = beehive.parse.ArgumentParser('L', 'U', 'beta', 'nt', 'momentum', )
+    parser = beehive.cli.ArgumentParser(('L', 'U', 'beta', 'nt', 'momentum', ))
     parser.add_argument('--Spin', type=int, nargs=2, default=(+1, +1))
     parser.add_argument('--Isospin', type=int, nargs=2, default=(+1, +1))
     args = parser.parse_args()
@@ -153,7 +167,7 @@ if __name__ == '__main__':
     hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the model
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt) # Instantiate the partition function
-    print(Z)
+    logger.info(Z)
 
     totalMomentum = lattice.momenta[args.momentum]
     C = two_body_correlator(Z, args.Spin, args.Isospin, totalMomentum) # Calculate the two-body correlation matrix
