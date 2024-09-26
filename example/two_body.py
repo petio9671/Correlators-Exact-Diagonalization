@@ -66,7 +66,7 @@ def two_body_operator(Z, Spin, Isospin, momenta):
         momenta (ndarray): Momenta of the two single body particles
 
     Returns:
-        sparse_array: Two-body operator in momentum space at a particular channel with 2 band combinations 
+        list of sparse_array: Two-body operator in momentum space at a particular channel with 2 band combinations
         
     """
 
@@ -106,10 +106,10 @@ def two_body_operator(Z, Spin, Isospin, momenta):
         if a[l, r] == 0:
             #logger.debug(f'(S, Sz)={Spin} (I, Iz)={Isospin} element [{l},{r}] vanishes.')
             continue
-        l_plus = op(c0_plus, l)
-        l_minus= op(c0_minus, l)
-        r_plus = op(c1_plus, r)
-        r_minus= op(c1_minus, r)
+        l_plus  = op(c0_plus, l)
+        l_minus = op(c0_minus, l)
+        r_plus  = op(c1_plus, r)
+        r_minus = op(c1_minus, r)
         stack[0] += a[l,r] * l_plus @ r_plus
         stack[1] += a[l,r] * l_plus @ r_minus
         stack[2] += a[l,r] * l_minus @ r_plus
@@ -128,7 +128,7 @@ def two_body_correlator(Z, Spin, Isospin, total_momentum):
         total_momentum (ndarray): Total momentum of the system
 
     Returns:
-        sparse_array: Correlator matrix
+        ndarray: Correlator matrix
         
     """
 

@@ -19,7 +19,7 @@ def one_body_operators(Z, momentum, operator):
         operator (list of sparse_array): Operator in position space
 
     Returns:
-        ndarray of sparse_array: One-body operator in momentum space with 2 bands
+        list of sparse_array: One-body operator in momentum space with 2 bands
         
     """
 
@@ -31,7 +31,7 @@ def one_body_operators(Z, momentum, operator):
     o_plus  = Z.H.operator(c_plus,  operator)
     o_minus = Z.H.operator(c_minus, operator)
 
-    return np.stack((o_plus, o_minus))
+    return list((o_plus, o_minus))
 
 @Timed(logging.info)
 def one_body_correlator(Z, hubbard_species, momentum):
