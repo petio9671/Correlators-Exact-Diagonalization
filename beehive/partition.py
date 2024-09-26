@@ -105,11 +105,35 @@ class PartitionFunction:
         """
 
         I, J = len(sink), len(source)
-        correlator = np.zeros((I, J, len(self.taus)), dtype=complex)
-        for i, j in product(range(I), range(J)):
-            correlator[i,j] = self.correlator(sink[i].T.conj(), source[j])
+        correlator = np.zeros((I, J, self._timeslices), dtype=complex)
+        # Essentially, we want to fill up the correlator via
+        #
+        #   for i, j in product(range(I), range(J)):
+        #       correlator[i,j] = self.correlator(sink[i].T.conj(), source[j])
+        #
+        # but the .correlator does a lot of very expensive matrix multiplication,
+        # and we invoke it once for each sink/source pair.
+        # Instead, we can re-use a lot, as we now demonstrate.
+        #
+        #   correlator[i,j] = tr[exp(-(β-τ)H) sink[i]† exp(-τH) source[j]]
+        #                   = tr[sink[i]† exp(-τH) source[j] exp(-(β-τ)H)]
+        #                   = tr[sink[i]† \----- evolved source[j] -----/]
+        #
+        # so we can evolve the source once and then take the trace with the different sink†s.
+        # 
+        # This reduces the number of expensive time evolutions from
+        #
+        #   O(#sinks * #sources) ~ O(#momenta^2) = O(unit cells^2)
+        #
+        # to the much less O(#sources) ~ O(#momenta) = O(#unit cells).
+        for j in range(J):
+            # But, we store an evolved source for each timeslice!  So there is a nontrivial memory cost.
+            evolved = [forward @ source[j] @ backward for forward, backward in zip(self._transfers[:-1], reversed(self._transfers))]
+            for i in range(I):
+                snk = sink[i].T.conj()
+                correlator[i, j] = np.fromiter(((snk @ ev).trace() for ev in evolved), dtype=complex)
 
-        return correlator
+        return correlator / self.value
 
     def plot_correlator(self, C, axsize=(4, 4), **kwargs):
         """Plot correlator matrix
