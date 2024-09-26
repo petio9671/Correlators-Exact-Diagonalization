@@ -39,7 +39,9 @@ class PartitionFunction:
     @cached_property
     @Timed(logger.debug)
     def value(self):
-        """sparse_array: value of the partiton function"""
+        """:float: value of the partiton function"""
+        if self.nt == float('inf'):
+            return ( sc.sparse.linalg.expm(-self.beta*self.H.Hamiltonian) ).trace()
 
         return self._transfers[-1].trace()
 
