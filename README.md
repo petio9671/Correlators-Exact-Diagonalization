@@ -16,7 +16,7 @@ The quick build.
 
 1. Obtain a copy of the package
 ```
-https://github.com/petio9671/Correlators-Exact-Diagonalization.git && cd Correlators-Exact-Diagonalization
+git clone https://github.com/petio9671/Correlators-Exact-Diagonalization.git && cd Correlators-Exact-Diagonalization
 ```
 2. Install using pip
 ```
