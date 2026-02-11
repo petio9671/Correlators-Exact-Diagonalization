@@ -79,8 +79,8 @@ if __name__ == '__main__':
     parser.add_argument('--pdf', type=str, default='')
     args = parser.parse_args()
 
-    # lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
-    lattice = beehive.Square(*args.L) # Instantiate the lattice
+    lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
+    # lattice = beehive.Square(*args.L) # Instantiate the lattice
     hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the Hubbard model
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt) # Instantiate the partition function
@@ -88,6 +88,7 @@ if __name__ == '__main__':
 
     momentum = lattice.momenta[args.momentum] # Get the momentum you want from the momenta array
     C = one_body_correlator(Z, args.species, momentum) # Calculate the one-body correlation function
+    print(C)
 
     # Plot the correlation function
     fig,ax = Z.plot_correlator(C)

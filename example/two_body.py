@@ -11,6 +11,7 @@ from beehive.monitoring import Timer, Timed
 
 import one_body
 from pdf import PDF
+import h5py as h5
 
 two_body_amplitudes = {
     # For two momenta (or unit cells) k, q we can construct 16 different two-body operators,
@@ -157,8 +158,8 @@ if __name__ == '__main__':
     args.Spin = (args.Spin[0], args.Spin[1])
     args.Isospin = (args.Isospin[0], args.Isospin[1])
 
-    # lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
-    lattice = beehive.Square(*args.L) # Instantiate the lattice
+    lattice = beehive.Honeycomb(*args.L) # Instantiate the lattice
+    # lattice = beehive.Square(*args.L) # Instantiate the lattice
     hubbard = beehive.Hubbard(lattice, args.U) # Instantiate the model
 
     Z = beehive.PartitionFunction(hubbard, args.beta, args.nt) # Instantiate the partition function
@@ -170,10 +171,13 @@ if __name__ == '__main__':
         print(f"First and second momenta {p}, {k}")
 
     # Plot the correlator matrix
-    with PDF(args.pdf) as pdf:
+    with PDF(args.pdf) as pdf, h5.File(f'U{hubbard.U}_B{Z.beta}_Nt{Z.nt}_twobody.h5', 'w') as fl:
+        fl.create_group(f"TwoBody/I={args.Isospin[0]}_S={args.Spin[0]}_Iz={args.Isospin[1]}_Sz={args.Spin[1]}/P={totalMomentum}")
         for i, j in product(range(C.shape[0]), range(C.shape[1])):
             fig, ax = Z.plot_correlator(C[i,j])
             fig.suptitle(f'{lattice} U={hubbard.U} β={Z.beta} nt={Z.nt} (I={args.Isospin[0]} S={args.Spin[0]} Iz={args.Isospin[1]} Sz={args.Spin[1]}) P={totalMomentum} p={i}, {j}')
             pdf.save(fig)
+
+            fl[f"TwoBody/I={args.Isospin[0]}_S={args.Spin[0]}_Iz={args.Isospin[1]}_Sz={args.Spin[1]}/P={totalMomentum}"].create_dataset(f"p={i}, {j}", data=C[i,j])
     if not args.pdf:
         plt.show()
