@@ -83,25 +83,19 @@ class Square:
     def hopping(self):
         """:ndarray: Hopping matrix"""
 
-        # if self.L[0] == 1 and self.L[1] == 1:
-        #     return np.array([[1.]])
-
-        # if self.L[0] == 1 and self.L[1] == 1:
-        #     return np.array([[0., 1.], [1., 0.]])
-
         pos = self.positions
         separations = np.zeros((self.sites, self.sites))
-        # differ_by_L0= np.zeros((self.sites, self.sites))
-        # differ_by_L1= np.zeros((self.sites, self.sites))
+        differ_by_L0= np.zeros((self.sites, self.sites))
+        differ_by_L1= np.zeros((self.sites, self.sites))
         for i in range(self.sites):
             for j in range(i, self.sites):
                 separations[i,j] = np.sum((pos[i] - pos[j])**2)
-                # differ_by_L0[i,j] = np.sum((pos[i] + self.L[1]*self.a[1])**2)
-                # differ_by_L1[i,j] = np.sum((pos[j] + self.L[0]*self.a[0])**2)
+                differ_by_L0[i,j] = np.sum((pos[i] - pos[j] + self.L[0]*self.a[0])**2)
+                differ_by_L1[i,j] = np.sum((pos[i] - pos[j] + self.L[1]*self.a[1])**2)
 
         neighbors = np.array((np.round(separations, 0) == 1), dtype=float)
-        # neighbors = np.array((np.round(differ_by_L0, 0) == 1), dtype=float)
-        # neighbors += np.array((np.round(differ_by_L1, 0) == 1), dtype=float)
+        neighbors += np.array((np.round(differ_by_L0, 0) == 1), dtype=float)
+        neighbors += np.array((np.round(differ_by_L1, 0) == 1), dtype=float)
 
         return neighbors + neighbors.T
 
@@ -145,16 +139,12 @@ class Square:
         if band not in (-1, +1):
             raise ValueError("Only +1 ot -1 values are allowed")
 
-        # fk = np.exp(1j*momentum[0]) + 2*np.exp(-1j*momentum[0]/2)*np.cos(np.sqrt(3)*momentum[1]/2)
-        # exp_theta = np.exp(-1j*np.angle(fk))
-
         amplitudes = np.zeros(self.sites, dtype=complex)
         for ip, position in enumerate(self.A_integers):
             aPos = np.einsum('i,ij',position,self.a)
 
             exp_arg_a = -1j*np.einsum('i,i',momentum, aPos)
 
-            # fcoef1 = band*exp_theta*np.exp(exp_arg_a)/np.sqrt(self.unit_cells*2)
             fcoef1 = np.exp(exp_arg_a)/np.sqrt(self.unit_cells)
 
             amplitudes[ip] = fcoef1
@@ -256,7 +246,7 @@ class Square:
 
         momenta = self.momenta
         b = self.b
-        boundary = 1/2* np.array([
+        boundary = 1./2 * np.array([
             -  b[0] + b[1],
             +  b[0] + b[1],
             +  b[0] - b[1],
